@@ -22,8 +22,8 @@ const BUSY_TIMEOUT_MS = 250;
 /** Default location of Cursor's global state.vscdb per platform (override: DASHBOARD_CURSOR_STATE_DB). */
 function getCursorStateDbPath() {
   const override = process.env.DASHBOARD_CURSOR_STATE_DB;
-  if (override) return path.resolve(override);
   const home = os.homedir();
+  if (override) return path.resolve(override.replace(/^~(?=$|[\\/])/, home));
   let userDir;
   if (process.platform === "darwin") {
     userDir = path.join(home, "Library", "Application Support", "Cursor", "User");

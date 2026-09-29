@@ -12,7 +12,14 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const Database = require("better-sqlite3");
+// better-sqlite3 is optional; build fixtures with the same fallback server/db.js uses.
+let Database;
+try {
+  Database = require("better-sqlite3");
+  new Database(":memory:").close();
+} catch {
+  Database = require("../compat-sqlite");
+}
 
 const ROOT = path.join(os.tmpdir(), `cursor-state-db-${Date.now()}-${process.pid}`);
 const CURSOR_HOME = path.join(ROOT, ".cursor");
@@ -69,6 +76,15 @@ after(() => {
 describe("Cursor state.vscdb title lookup", () => {
   it("honors DASHBOARD_CURSOR_STATE_DB", () => {
     assert.equal(getCursorStateDbPath(), path.resolve(STATE_DB));
+  });
+
+  it("expands a leading ~ in DASHBOARD_CURSOR_STATE_DB", () => {
+    process.env.DASHBOARD_CURSOR_STATE_DB = "~/cursor/state.vscdb";
+    try {
+      assert.equal(getCursorStateDbPath(), path.join(os.homedir(), "cursor", "state.vscdb"));
+    } finally {
+      process.env.DASHBOARD_CURSOR_STATE_DB = STATE_DB;
+    }
   });
 
   it("returns the chat name when present and null when it is missing", () => {
