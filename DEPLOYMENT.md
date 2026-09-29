@@ -8,7 +8,7 @@ CCAM supports three production paths:
 
 The persistence contract is the same everywhere: **one active dashboard writer per SQLite volume**. CCAM does not support HPA, active-active replicas, blue-green, or canary deployments while SQLite is the database. Nginx, Prometheus, Grafana, and MCP can run around the dashboard, but the dashboard itself remains one Recreate-managed writer.
 
-Cursor discovery is local-filesystem based. A host deployment reads `${DASHBOARD_CURSOR_HOME:-~/.cursor}` automatically. Docker Compose mounts `${CURSOR_HOME:-~/.cursor}` read-only at `/home/node/.cursor` and sets `DASHBOARD_CURSOR_HOME` to that container path; set host-side `CURSOR_HOME=/path/to/.cursor` when the default is not correct. Durable Cursor transcript snapshots live in the standard dashboard data volume and follow the same backup/restore lifecycle as `dashboard.db`.
+Cursor discovery is local-filesystem based. A host deployment reads `${DASHBOARD_CURSOR_HOME:-~/.cursor}` automatically. Docker Compose mounts `${CURSOR_HOME:-~/.cursor}` read-only at `/home/node/.cursor` and sets `DASHBOARD_CURSOR_HOME` to that container path; set host-side `CURSOR_HOME=/path/to/.cursor` when the default is not correct. Chat titles for sessions without `meta.json` titles come from the Cursor IDE's `state.vscdb`, which lives outside `~/.cursor` and is not mounted by Compose; containers keep the prompt/short-id fallback unless you mount that file read-only and point `DASHBOARD_CURSOR_STATE_DB` at it. Durable Cursor transcript snapshots live in the standard dashboard data volume and follow the same backup/restore lifecycle as `dashboard.db`.
 
 ## Production topology
 
