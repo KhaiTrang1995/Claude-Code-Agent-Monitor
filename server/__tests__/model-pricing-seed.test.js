@@ -76,6 +76,7 @@ describe("model_pricing seed — models that had no rule or a stale rate", () =>
     ["claude-opus-5-5%", 4, 20, 0.2, 5, 8],
     ["claude-opus-5%", 5, 25, 0.5, 6.25, 10],
     ["claude-opus-4-5%", 5, 25, 0.5, 6.25, 10],
+    ["claude-sonnet-5-5%", 2, 10, 0.2, 2.5, 4],
     ["claude-sonnet-5%", 2, 10, 0.2, 2.5, 4],
   ];
 
@@ -140,6 +141,9 @@ describe("model_pricing seed — models that had no rule or a stale rate", () =>
       ["claude-opus-5[1m]", "claude-opus-5%", 0.5],
       ["claude-opus-5-5", "claude-opus-5-5%", 0.2],
       ["claude-opus-5-5[1m]", "claude-opus-5-5%", 0.2],
+      ["claude-sonnet-5-5", "claude-sonnet-5-5%", 0.2],
+      ["claude-sonnet-5-5[1m]", "claude-sonnet-5-5%", 0.2],
+      ["claude-sonnet-5", "claude-sonnet-5%", 0.2],
     ]) {
       const row = stmts.matchPricing.get(model);
       assert.ok(row, `${model} must match a pricing rule`);
@@ -162,6 +166,7 @@ describe("model_pricing seed — models that had no rule or a stale rate", () =>
       "claude-opus-4-7",
       "claude-opus-4-6",
       "claude-opus-4-5",
+      "claude-sonnet-5-5",
       "claude-sonnet-5",
       "claude-haiku-4-5",
     ].filter(
@@ -372,5 +377,54 @@ describe("Sonnet 5 rate correction on pre-existing databases", () => {
     setSonnet5([3, 15, 0.3, 3.75, 6]);
     assert.equal(correctSonnet5StandardRate(db).changes, 1, "first run corrects the row");
     assert.equal(correctSonnet5StandardRate(db).changes, 0, "second run is a no-op");
+  });
+
+  it("keeps Sonnet 5.5 on its own row: no intro stamp, and Sonnet 5 edits do not reach it", () => {
+    // claude-sonnet-5-5 also LIKE-matches claude-sonnet-5%. The dedicated row
+    // must win, carry no Sonnet 5 launch promo, and stay at the published
+    // $2/$10 while the Sonnet 5 row is changed underneath it.
+    const sonnet55 = db
+      .prepare("SELECT * FROM model_pricing WHERE model_pattern = 'claude-sonnet-5-5%'")
+      .get();
+    assert.ok(sonnet55, "claude-sonnet-5-5% must have its own pricing rule");
+    assert.equal(sonnet55.display_name, "Claude Sonnet 5.5");
+    assert.equal(
+      sonnet55.intro_until,
+      null,
+      "the Sonnet 5 launch promo must not be stamped on 5.5"
+    );
+    assert.equal(sonnet55.fast_input_per_mtok, 0, "Sonnet 5.5 has no Fast mode pricing");
+    assert.equal(sonnet55.fast_output_per_mtok, 0, "Sonnet 5.5 has no Fast mode pricing");
+
+    setSonnet5([7, 21, 0.7, 8.75, 14]);
+    try {
+      const rules = db.prepare("SELECT * FROM model_pricing").all();
+      const MTOK = 1_000_000;
+      const result = calculateCost(
+        [
+          {
+            model: "claude-sonnet-5-5",
+            speed: "standard",
+            inference_geo: "global",
+            service_tier: "standard",
+            context_size: "short",
+            input_tokens: MTOK,
+            output_tokens: MTOK,
+            cache_read_tokens: MTOK,
+            cache_write_tokens: 0,
+            cache_write_1h_tokens: 0,
+          },
+        ],
+        rules,
+        null
+      );
+      assert.deepEqual(result.unpriced_models ?? [], []);
+      const row = result.breakdown.find((b) => b.model === "claude-sonnet-5-5");
+      assert.equal(row.matched_rule, "claude-sonnet-5-5%");
+      // sonnet-5.5: 2 + 10 + 0.20 = 12.20 (would be 28.70 via the edited Sonnet 5 rule)
+      assert.equal(row.cost, 12.2);
+    } finally {
+      setSonnet5([2, 10, 0.2, 2.5, 4]);
+    }
   });
 });

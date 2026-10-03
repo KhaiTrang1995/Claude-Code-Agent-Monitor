@@ -684,6 +684,12 @@ const DEFAULT_PRICING = [
   // numbers; once it lapsed, usage fell back to the old $3/$15 standard and
   // over-reported by 50%. The promo row is now a no-op and is kept only so
   // existing DBs that already stamped intro_until keep their history.
+  // claude-sonnet-5-5: $2/$10 input/output, $0.20 cache read, $2.50 5m cache
+  // write, $4 1h cache write; no Fast mode. Same numbers as Sonnet 5 today, but
+  // it gets its own row: `claude-sonnet-5%` also LIKE-matches
+  // "claude-sonnet-5-5", so without one Sonnet 5.5 usage is labelled as Sonnet 5
+  // and silently follows every Sonnet 5 edit, intro stamp and rate correction.
+  ["claude-sonnet-5-5%", "Claude Sonnet 5.5", 2, 10, 0.2, 2.5, 4, 0, 0],
   ["claude-sonnet-5%", "Claude Sonnet 5", 2, 10, 0.2, 2.5, 4, 0, 0],
   ["claude-sonnet-4-6%", "Claude Sonnet 4.6", 3, 15, 0.3, 3.75, 6, 0, 0],
   ["claude-sonnet-4-5%", "Claude Sonnet 4.5", 3, 15, 0.3, 3.75, 6, 0, 0],
