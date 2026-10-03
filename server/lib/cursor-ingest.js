@@ -3,7 +3,8 @@
  * @description Discovers, enriches, snapshots, and backfills Cursor agent
  * sessions from ~/.cursor. Chat metadata is ingested before Cursor creates a
  * transcript, so new sessions and submitted prompts reach the dashboard live;
- * later transcript data adds durable conversation and subagent detail.
+ * later transcript data adds durable conversation and subagent detail. Titles
+ * come from chat metadata, then Cursor's state.vscdb, then the first prompt.
  * @author Son Nguyen <hoangson091104@gmail.com>
  */
 
@@ -17,6 +18,7 @@ const {
   indexCursorChatDirs,
   readCursorChatMetadata,
 } = require("./cursor-home");
+const { createCursorTitleLookup } = require("./cursor-state-db");
 
 const RECENT_SESSION_MS = 10 * 60 * 1000;
 // How often the orphan-agent heal below may rescan (it always runs on the
@@ -470,7 +472,9 @@ function enrichCursorSession(dbModule, transcriptPath, options = {}) {
     new Date(Math.max(chatMtimeMs, transcriptMtimeMs)).toISOString()
   );
   const firstPrompt = prompts[0] || null;
-  const nativeTitle = trimPrompt(meta?.title);
+  const nativeTitle =
+    trimPrompt(meta?.title) ||
+    (typeof options.cursorTitle === "function" ? trimPrompt(options.cursorTitle(sessionId)) : "");
   const name = nativeTitle || promptLabel(firstPrompt) || `Cursor session ${sessionId.slice(0, 8)}`;
   const cwd = typeof meta?.cwd === "string" && meta.cwd.trim() ? meta.cwd.trim() : null;
   const model = typeof options.model === "string" && options.model ? options.model : null;
@@ -708,6 +712,16 @@ function enrichCursorSession(dbModule, transcriptPath, options = {}) {
 }
 
 async function syncCursorSessions(dbModule, options = {}) {
+  // One read-only state.vscdb handle per pass, opened only if a title is needed.
+  const titles = createCursorTitleLookup();
+  try {
+    return await syncCursorSessionsWithTitles(dbModule, options, titles.title);
+  } finally {
+    titles.close();
+  }
+}
+
+async function syncCursorSessionsWithTitles(dbModule, options, cursorTitle) {
   const transcripts = discoverCursorTranscripts(options.root);
   const chatDirs = indexCursorChatDirs();
   const transcriptsBySession = new Map();
@@ -763,7 +777,11 @@ async function syncCursorSessions(dbModule, options = {}) {
       counters.skipped++;
       continue;
     }
-    const result = enrichCursorSession(dbModule, transcriptPath, { sessionId, chatDir });
+    const result = enrichCursorSession(dbModule, transcriptPath, {
+      sessionId,
+      chatDir,
+      cursorTitle,
+    });
     if (result.session) {
       syncFingerprints.set(sessionId, cursorSessionFingerprint(transcriptPath, chatDir));
     }
