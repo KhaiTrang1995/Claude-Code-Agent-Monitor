@@ -206,6 +206,59 @@ describe("gpt_model_pricing seed — GPT-6 Astra", () => {
   });
 });
 
+describe("gpt_model_pricing seed — GPT-6 Sol and Luna", () => {
+  // https://developers.openai.com/api/docs/pricing (2026-09-29), per 1M tokens:
+  // [input, cached input, cache writes, output] for each band.
+  const expected = {
+    "gpt-6-sol%": {
+      short: [2, 0.2, 2.5, 10],
+      long: [4, 0.4, 5, 15],
+      fast: [4, 0.4, 5, 20],
+      fast_long: [8, 0.8, 10, 30],
+    },
+    "gpt-6-luna%": {
+      short: [0.1, 0.01, 0.125, 0.5],
+      long: [0.2, 0.02, 0.25, 0.75],
+      fast: [0.2, 0.02, 0.25, 1],
+      fast_long: [0.4, 0.04, 0.5, 1.5],
+    },
+  };
+  const kinds = ["input", "cached_input", "cache_write", "output"];
+
+  for (const [pattern, bands] of Object.entries(expected)) {
+    it(`${pattern} is seeded with every published band`, () => {
+      const row = db
+        .prepare("SELECT * FROM gpt_model_pricing WHERE model_pattern = ?")
+        .get(pattern);
+      assert.ok(row, `${pattern} must have a pricing rule — otherwise recorded usage is unpriced`);
+      for (const [band, rates] of Object.entries(bands)) {
+        kinds.forEach((kind, index) => {
+          assert.equal(row[`${band}_${kind}_per_mtok`], rates[index], `${pattern} ${band}_${kind}`);
+        });
+      }
+    });
+  }
+
+  it("prices gpt-6-sol and gpt-6-luna usage against the full rate card", () => {
+    const rules = db.prepare("SELECT * FROM gpt_model_pricing").all();
+    const usage = (model) => ({
+      model,
+      speed: "standard",
+      context_size: "short",
+      input_tokens: 1_000_000,
+      output_tokens: 1_000_000,
+      cache_read_tokens: 1_000_000,
+      cache_write_tokens: 1_000_000,
+    });
+    const sol = calculateGptCost([usage("gpt-6-sol")], rules);
+    assert.ok(Math.abs(sol.total_cost - 14.7) < 1e-9, "2 + 10 + 0.2 + 2.5 per million tokens");
+    assert.deepEqual(sol.unpriced_models ?? [], []);
+    const luna = calculateGptCost([usage("gpt-6-luna")], rules);
+    assert.ok(Math.abs(luna.total_cost - 0.735) < 1e-9, "0.1 + 0.5 + 0.01 + 0.125 per million");
+    assert.deepEqual(luna.unpriced_models ?? [], []);
+  });
+});
+
 describe("historical usage reprices from the corrected rules", () => {
   // Cost is computed from token_usage on every request and never stored, so
   // fixing a rule retroactively fixes every past session. This asserts the
