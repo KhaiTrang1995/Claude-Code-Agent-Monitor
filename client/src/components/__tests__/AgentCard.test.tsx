@@ -179,6 +179,35 @@ describe("AgentCard", () => {
     expect(screen.getAllByText(formatModelName("claude-opus-4-8")!)).toHaveLength(1);
   });
 
+  it("keeps the full subtitle and a subagent's session name available on hover", () => {
+    const session = {
+      id: "s",
+      name: "Refactor the ingestion pipeline for very large rollouts",
+      status: "active",
+      cwd: "/Users/dev/proj",
+      agent_count: 4,
+      metadata: JSON.stringify({ turn_count: 12 }),
+    } as never;
+    const { unmount } = renderCard(
+      <AgentCard agent={makeAgent({ type: "main", name: "Main" })} session={session} />
+    );
+    // The single-line subtitle truncates in a 288px column; hover shows it all.
+    const subtitle = screen.getByText("proj · 3 subagents · 12 turns");
+    expect(subtitle).toHaveAttribute("title", "proj · 3 subagents · 12 turns");
+    unmount();
+
+    renderCard(
+      <AgentCard
+        agent={makeAgent({ type: "subagent", subagent_type: "qa", session_id: "s" })}
+        session={session}
+      />
+    );
+    // A subagent card's footer keeps the (max-width truncated) session name.
+    expect(
+      screen.getByTitle("Refactor the ingestion pipeline for very large rollouts")
+    ).toBeInTheDocument();
+  });
+
   it("shows a subagent's OWN cost, not the session total (avoids misleading spend)", () => {
     renderCard(
       <AgentCard

@@ -266,7 +266,13 @@ export function AgentCard({
             >
               {displayName}
             </p>
-            {subtitle && <p className="text-[11px] text-gray-500 truncate">{subtitle}</p>}
+            {/* Single line; the full subtitle (tool · project · counts) stays
+                available on hover when the column is too narrow for it. */}
+            {subtitle && (
+              <p className="text-[11px] text-gray-500 truncate" title={subtitle}>
+                {subtitle}
+              </p>
+            )}
           </div>
         </div>
         {/* compact: cards are narrow — inline reason chip would squeeze the
@@ -342,7 +348,9 @@ export function AgentCard({
             subagent, so its session name stays here as context. */}
         <span className="ml-auto flex items-center gap-1 min-w-0 opacity-50">
           {realSessionName && !providerLabel && (
-            <span className="truncate max-w-[10rem]">{realSessionName} ·</span>
+            <span className="truncate max-w-[10rem]" title={realSessionName}>
+              {realSessionName} ·
+            </span>
           )}
           <span className="font-mono flex-shrink-0">{agent.session_id.slice(0, 8)}</span>
         </span>

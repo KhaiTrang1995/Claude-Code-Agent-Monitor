@@ -786,7 +786,10 @@ the session's own title — wrapped to at most three lines, with long unbroken
 tokens breaking anywhere and the full title on hover — and lead the subtitle
 with the tool name (`Claude Code · repo · 12 turns`). Without a real title the
 card reads "Untitled session"; the footer keeps only the short session ID
-(subagent cards also keep the session name there as context).
+(subagent cards also keep the session name there as context). Every field that
+stays single-line and truncates in a narrow column — the agent card subtitle
+and footer session name, the session card working directory and model — shows
+its full text on hover.
 
 **Props:**
 ```typescript

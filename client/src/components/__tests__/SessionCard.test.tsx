@@ -1,8 +1,8 @@
 /**
  * @file SessionCard.test.tsx
  * @description Regression tests for the compact Kanban session card, including
- * preserving provider-native session titles, two-turn human task context, and
- * no redundant ID badge.
+ * preserving provider-native session titles, two-turn human task context,
+ * no redundant ID badge, and hover titles for single-line truncated fields.
  * @author Son Nguyen <hoangson091104@gmail.com>
  */
 
@@ -11,6 +11,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { SessionCard } from "../SessionCard";
 import type { Session } from "../../lib/types";
+import { formatModelName } from "../../lib/format";
 
 function makeSession(overrides: Partial<Session> = {}): Session {
   return {
@@ -117,5 +118,18 @@ describe("SessionCard", () => {
     expect(title).toHaveAttribute("title", name);
     expect(container.querySelector("[data-status-dot]")).not.toBeNull();
     expect(container.querySelector(".badge")).toBeNull();
+  });
+
+  it("keeps the full working directory and model available on hover", () => {
+    const cwd = "/Users/dev/some/deeply/nested/monorepo/packages/service-with-a-long-name";
+    render(
+      <MemoryRouter>
+        <SessionCard session={makeSession({ cwd })} />
+      </MemoryRouter>
+    );
+    // Both lines are single-line truncated in a narrow Kanban column.
+    expect(screen.getByText(cwd)).toHaveAttribute("title", cwd);
+    const model = formatModelName("gpt-5.6-terra")!;
+    expect(screen.getByText(model)).toHaveAttribute("title", model);
   });
 });

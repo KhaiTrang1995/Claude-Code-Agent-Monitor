@@ -199,7 +199,10 @@ export function SessionCard({ session, onClick, statusDisplay = "badge" }: Sessi
       )}
 
       {session.cwd && (
-        <p className="text-xs text-gray-400 mb-3 truncate font-mono leading-relaxed">
+        <p
+          className="text-xs text-gray-400 mb-3 truncate font-mono leading-relaxed"
+          title={session.cwd}
+        >
           {session.cwd}
         </p>
       )}
@@ -212,7 +215,9 @@ export function SessionCard({ session, onClick, statusDisplay = "badge" }: Sessi
         {model && (
           <span className="flex items-center gap-1 flex-shrink-0 truncate">
             <Cpu className="w-3 h-3" />
-            <span className="truncate">{model}</span>
+            <span className="truncate" title={model}>
+              {model}
+            </span>
           </span>
         )}
         {typeof session.cost === "number" && session.cost > 0 && (
