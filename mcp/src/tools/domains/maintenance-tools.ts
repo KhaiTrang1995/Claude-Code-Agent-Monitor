@@ -165,7 +165,9 @@ export function registerMaintenanceTools(context: ToolContext): void {
   // needs confirmation_token "PRUNE_SNAPSHOTS" — a pruned snapshot may be the
   // only remaining copy of a conversation once Claude Code/Codex/Cursor
   // deleted the original. Calls POST /api/settings/snapshots/prune with at
-  // least one of max_age_days / max_bytes / orphans. Output: the plan
+  // least one of max_age_days / max_bytes / orphans. max_bytes takes a byte
+  // count or a size with a binary unit ("500MB", "5GB"), matching the API and
+  // `ccam snapshots prune --max-size`; the server validates it. Output: the plan
   // (candidates, candidate_bytes, remaining_bytes, over_cap_bytes) and, when
   // applied, removed_files / removed_bytes.
   register(
@@ -173,14 +175,19 @@ export function registerMaintenanceTools(context: ToolContext): void {
     "Plan (dry run, default) or apply a prune of old transcript snapshots. Applying is destructive.",
     {
       max_age_days: z.number().positive().max(36500).optional(),
-      max_bytes: z.number().int().positive().optional(),
+      max_bytes: z
+        .union([
+          z.number().int().positive(),
+          z.string().regex(/^\s*\d+(\.\d+)?\s*[kmgt]?i?b?\s*$/i, 'Use bytes or a size like "5GB"'),
+        ])
+        .optional(),
       orphans: z.boolean().optional(),
       dry_run: z.boolean().optional(),
       confirmation_token: z.string().optional(),
     },
     async (args) => {
       const maxAgeDays = args.max_age_days as number | undefined;
-      const maxBytes = args.max_bytes as number | undefined;
+      const maxBytes = args.max_bytes as number | string | undefined;
       const orphans = args.orphans as boolean | undefined;
       if (maxAgeDays === undefined && maxBytes === undefined && orphans !== true) {
         throw new Error("At least one of max_age_days, max_bytes, or orphans:true is required.");

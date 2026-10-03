@@ -196,7 +196,7 @@ Deleting a source retains imported data by default. Purging requires `confirmati
 
 - `dashboard_cleanup_data`, `dashboard_reimport_history`
 - `dashboard_reinstall_hooks`, `dashboard_clear_all_data`
-- `dashboard_get_snapshot_storage` (read), `dashboard_compress_snapshots` (mutation, lossless), `dashboard_prune_snapshots` (dry run by default; applying is destructive)
+- `dashboard_get_snapshot_storage` (read), `dashboard_compress_snapshots` (mutation, lossless), `dashboard_prune_snapshots` (dry run by default; applying is destructive; `max_bytes` takes bytes or a size like `"5GB"`)
 
 ## Safety Model
 
