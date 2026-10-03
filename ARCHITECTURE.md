@@ -1639,8 +1639,12 @@ directory: `transcripts/` (Claude, written by `snapshotTranscript`),
 `cursor-transcripts/` (written by `cursor-ingest.js`), and `codex-transcripts/`
 (imported/remote Codex rollouts, which are also those sessions'
 `transcript_path`). Issue #358 bounded their growth without weakening the
-guarantee they exist for. The rule: **the dashboard never automatically deletes
-the only remaining copy of a transcript for a session the user still has.**
+guarantee they exist for. The rule: **the dashboard never deletes the only
+remaining copy of a transcript for a session the user still has unless the
+user opted in to it** — by configuring a retention cap or confirming a prune.
+Both remove whole old, finished sessions even when the provider has already
+expired the original; that is the point of a cap, which is why both are off
+by default and every prune can be previewed first.
 
 - **Never shrink, serve the fuller copy.** All three writers go through
   `server/lib/snapshot-store.js`. A snapshot is replaced only by a longer source

@@ -3,8 +3,9 @@
  * (`<dataDir>/transcripts`, `codex-transcripts`, `cursor-transcripts`) —
  * issue #358. The snapshots exist because Claude Code, Codex and Cursor delete
  * their own transcripts after a TTL, so the policy is built around one rule:
- * the dashboard never automatically deletes the only remaining copy of a
- * transcript for a session the user still has. Growth is bounded in layers:
+ * the dashboard never deletes the only remaining copy of a transcript for a
+ * session the user still has unless the user opted in (layer 3 below: a
+ * configured cap or a confirmed prune). Growth is bounded in layers:
  *
  *   1. Lossless, always on: snapshots whose original is gone (and has been
  *      idle for a grace period) are gzip-compressed with verification. Codex
@@ -16,7 +17,10 @@
  *   3. Opt-in caps (`DASHBOARD_SNAPSHOT_MAX_AGE_DAYS`,
  *      `DASHBOARD_SNAPSHOT_MAX_BYTES`, both unset by default): whole old,
  *      finished sessions are pruned oldest-first and tombstoned so a re-import
- *      does not regrow them. Every prune can be previewed as a dry run.
+ *      does not regrow them. This is the one deliberate exception to the rule:
+ *      a cap may remove the only copy of an old conversation once the
+ *      provider expired the original — excluding those would leave the cap
+ *      nothing to reclaim. Every prune can be previewed as a dry run.
  *
  * All filesystem work goes through snapshot-store.js (pure Node, OS-neutral).
  * @author Son Nguyen <hoangson091104@gmail.com>

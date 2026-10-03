@@ -1307,7 +1307,7 @@ Each sweep parses **only** files whose mtime is new or has advanced. A cold-cach
 
 ### Transcript Snapshot Retention
 
-Claude Code, Codex, and Cursor delete their own transcripts after a TTL, so imports snapshot them into `<dataDir>/transcripts`, `codex-transcripts`, and `cursor-transcripts`. `lib/snapshot-retention.js` bounds that growth without ever automatically deleting the only copy of a transcript for a session that still exists (issue #358):
+Claude Code, Codex, and Cursor delete their own transcripts after a TTL, so imports snapshot them into `<dataDir>/transcripts`, `codex-transcripts`, and `cursor-transcripts`. `lib/snapshot-retention.js` bounds that growth without deleting the only copy of a transcript for a session that still exists — except through the opt-in caps or a confirmed prune in step 4, which remove whole old sessions even when the original has expired (issue #358):
 
 1. **Writes never shrink.** `lib/snapshot-store.js#writeSnapshot` replaces a snapshot only with a longer source (or a same-length newer rewrite) via temp file + rename, so a truncated original can't clobber the fuller copy. Reads (`routes/sessions.js`, `lib/task-progress.js`) serve whichever of live and snapshot is longer.
 2. **Lossless compression** — on by default, `DASHBOARD_SNAPSHOT_COMPRESS=0` disables it. Every 6 h (first pass ~2 min after boot), Claude/Cursor snapshots whose original is gone and that have been idle 24 h become `.jsonl.gz` after a decompress + SHA-256 + length check. A provider whose source tree is missing or unreadable is skipped. Codex snapshots stay plain (byte-offset ingest source). `POST /api/settings/snapshots/compress` runs the pass on demand.
