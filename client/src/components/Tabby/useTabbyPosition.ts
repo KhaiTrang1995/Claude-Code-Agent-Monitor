@@ -165,6 +165,7 @@ export function useTabbyPosition(): TabbyPlacement {
   const liveRef = useRef<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
+    /** Re-derive the resting coordinates when the window resizes. */
     const onResize = () => force((n) => n + 1);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -173,6 +174,10 @@ export function useTabbyPosition(): TabbyPlacement {
   const resting = restingScreen(pos);
   const screen = drag ?? resting;
 
+  /**
+   * Start tracking a primary-button press and capture the pointer so moves keep arriving even when
+   * it leaves the avatar.
+   */
   const onPointerDown = useCallback(
     (e: ReactPointerEvent) => {
       if (e.button !== undefined && e.button !== 0) return;
@@ -189,6 +194,10 @@ export function useTabbyPosition(): TabbyPlacement {
     [screen.left, screen.top]
   );
 
+  /**
+   * Follow the pointer once it has moved past the drag threshold, so small jitters still count as a
+   * click.
+   */
   const onPointerMove = useCallback((e: ReactPointerEvent) => {
     const start = startRef.current;
     if (!start) return;
@@ -205,6 +214,7 @@ export function useTabbyPosition(): TabbyPlacement {
     setDrag({ left, top });
   }, []);
 
+  /** Release the pointer. After a drag, dock to the nearer side and save the position. */
   const onPointerUp = useCallback((e: ReactPointerEvent) => {
     try {
       (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
@@ -227,6 +237,10 @@ export function useTabbyPosition(): TabbyPlacement {
     movedRef.current = false;
   }, []);
 
+  /**
+   * Report whether the last press was a drag, and reset the flag, so the click handler can ignore
+   * the click that ends a drag.
+   */
   const consumeDrag = useCallback(() => {
     const was = draggedRef.current;
     draggedRef.current = false;

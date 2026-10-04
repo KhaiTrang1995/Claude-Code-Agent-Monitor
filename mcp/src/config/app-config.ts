@@ -146,6 +146,7 @@ const LOCAL_DASHBOARD_HOSTS = new Set([
   "host.containers.internal",
   "agent-monitor",
 ]);
+/** Log levels accepted in `MCP_LOG_LEVEL`. */
 const VALID_LOG_LEVELS = new Set<LogLevel>(["debug", "info", "warn", "error"]);
 
 /** Parses `1/true/yes/on` / `0/false/no/off` (case-insensitive); anything
@@ -209,6 +210,13 @@ function parseDashboardUrl(raw: string | undefined): URL {
   return url;
 }
 
+/**
+ * Read the dashboard API token: `MCP_DASHBOARD_API_TOKEN` or `DASHBOARD_API_TOKEN`, else the file
+ * named by `MCP_DASHBOARD_API_TOKEN_FILE` or `DASHBOARD_API_TOKEN_FILE`.
+ *
+ * @param env - Process environment.
+ * @returns The token, or undefined when none is configured.
+ */
 function readDashboardToken(env: NodeJS.ProcessEnv): string | undefined {
   const direct = env.MCP_DASHBOARD_API_TOKEN?.trim() || env.DASHBOARD_API_TOKEN?.trim();
   if (direct) return direct;
@@ -222,6 +230,14 @@ function readDashboardToken(env: NodeJS.ProcessEnv): string | undefined {
   }
 }
 
+/**
+ * Read a secret from an environment variable, or else from the file named by a second variable.
+ *
+ * @param env - Process environment.
+ * @param directName - Variable holding the secret itself.
+ * @param fileName - Variable holding a path to a file with the secret.
+ * @returns The trimmed secret, or undefined.
+ */
 function readSecret(
   env: NodeJS.ProcessEnv,
   directName: string,
@@ -238,6 +254,15 @@ function readSecret(
   }
 }
 
+/**
+ * Read the dashboard token and refuse to send it over plain HTTP, except to loopback addresses and
+ * the `agent-monitor` container alias.
+ *
+ * @param env - Process environment.
+ * @param dashboardBaseUrl - Dashboard URL the token will be sent to.
+ * @returns The token, or undefined.
+ * @throws When a token is configured for a non-loopback HTTP URL.
+ */
 function parseDashboardToken(env: NodeJS.ProcessEnv, dashboardBaseUrl: URL): string | undefined {
   const token = readDashboardToken(env);
   if (

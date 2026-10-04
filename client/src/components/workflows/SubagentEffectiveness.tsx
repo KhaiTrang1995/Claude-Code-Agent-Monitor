@@ -197,6 +197,7 @@ interface SparklineTooltipState {
 function Sparkline({ data, color }: SparklineProps) {
   const { t, i18n } = useTranslation(["workflows", "common"]);
   const locale = i18n.resolvedLanguage ?? i18n.language;
+  /** Localized short weekday names, Monday first (January 5, 2026 is a Monday). */
   const dayLabels = useMemo(
     () =>
       Array.from({ length: 7 }, (_, day) =>
@@ -274,9 +275,13 @@ function SparklineTooltip({
   value,
   color,
 }: {
+  /** Screen rectangle of the hovered bar, used to position the tooltip. */
   rect: DOMRect;
+  /** Weekday label. */
   label: string;
+  /** Invocations on that weekday. */
   value: number;
+  /** Accent color of the card. */
   color: string;
 }) {
   const { t } = useTranslation("workflows");

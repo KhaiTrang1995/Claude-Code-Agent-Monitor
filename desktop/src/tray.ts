@@ -113,8 +113,11 @@ export interface TrayActions {
  * two types must stay in sync by hand if the stats API response shape changes.
  */
 export interface ServerSnapshot {
+  /** Sessions currently active. */
   activeSessions: number;
+  /** Agents currently working. */
   workingAgents: number;
+  /** Events recorded today. */
   eventsToday: number;
 }
 
@@ -191,6 +194,7 @@ export function createTray(actions: TrayActions): Tray {
     const port = actions.serverPort();
     const portLabel = port ? `🟢  Listening on :${port}` : "🔴  Server not running";
     const snap = actions.getSnapshot();
+    /** Open the dashboard window. */
     const open = (): void => actions.showDashboard();
     const snapshotItems: Electron.MenuItemConstructorOptions[] = snap
       ? [
