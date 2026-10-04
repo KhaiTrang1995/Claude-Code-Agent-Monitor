@@ -93,15 +93,25 @@
 
 /** Result of a successful match. `indices` are positions in the original text. */
 export interface FuzzyMatch {
+  /** Match quality; higher is better. Only comparable between results for the same query. */
   score: number;
+  /** Positions of the matched characters in the original text, for highlighting. */
   indices: number[];
 }
 
+/** Score added when a matched character directly follows the previous match. */
 const BONUS_CONTIGUOUS = 8;
+/**
+ * Score added when a matched character starts a word (follows a space, `-`, `_`, `/`, `.`, or `:`).
+ */
 const BONUS_WORD_START = 12;
+/** Score added when the first query character matches the very first character of the text. */
 const BONUS_FIRST_CHAR = 16;
+/** Score subtracted per skipped character between matches, capped at 10 per gap. */
 const PENALTY_GAP = 1;
+/** Score added when the whole query appears as a contiguous substring. */
 const BONUS_EXACT_SUBSTRING = 40;
+/** Extra score when that contiguous substring is at the very start of the text. */
 const BONUS_PREFIX = 30;
 
 /** Characters after which the next character counts as starting a word. */
@@ -113,6 +123,7 @@ function isSeparator(char: string): boolean {
 
 /** Folded text plus, for each folded position, the index it came from. */
 interface FoldedText {
+  /** Text after case folding and diacritic stripping. */
   text: string;
   /** `offsets[i]` is the index in the original string that produced `text[i]`. */
   offsets: number[];

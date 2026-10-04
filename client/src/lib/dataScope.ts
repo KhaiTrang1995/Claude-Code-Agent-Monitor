@@ -102,10 +102,17 @@
 
 import { useSyncExternalStore } from "react";
 
+/**
+ * Which machines' data is shown: `all` (this machine and every remote source), `local` (this
+ * machine only), or `selected` (the chosen sources).
+ */
 export type ScopeMode = "all" | "local" | "selected";
+/** Which product's data is shown: Claude-compatible (Claude Code and Cursor), Codex, or both. */
 export type ProviderScope = "claude" | "codex" | "both";
 
+/** The global data scope applied to every scoped list and aggregate request. */
 export interface DataScope {
+  /** Machine selection mode. */
   mode: ScopeMode;
   /** Source ids selected when `mode === "selected"`. */
   selected: string[];
@@ -113,9 +120,17 @@ export interface DataScope {
   provider?: ProviderScope;
 }
 
+/** localStorage key for the persisted scope. */
 const STORAGE_KEY = "ccam-data-scope";
+/** Scope for a first visit: every machine and both products. */
 const DEFAULT_SCOPE: DataScope = { mode: "all", selected: [] };
 
+/**
+ * Read the persisted scope, validating each field so a corrupt or outdated entry falls back to the
+ * defaults.
+ *
+ * @returns The stored scope, or {@link DEFAULT_SCOPE}.
+ */
 function load(): DataScope {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -141,8 +156,13 @@ function load(): DataScope {
 // The single source of truth for this tab. Replaced wholesale on every change so
 // useSyncExternalStore's getSnapshot returns a stable reference between changes.
 let current: DataScope = load();
+/** Subscribers notified when the scope changes. */
 const listeners = new Set<() => void>();
 
+/**
+ * Save the current scope to localStorage. If storage is disabled, the in-memory scope still works
+ * for the session.
+ */
 function persist(): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
