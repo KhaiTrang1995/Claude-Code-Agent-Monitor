@@ -129,12 +129,6 @@ graph LR
     style D fill:#10b981,stroke:#34d399,color:#fff
 ```
 
-### Cursor 支持
-
-Cursor 无需单独设置：启动页选择 **Claude Code** 时会开箱即用地启用 Cursor 监控。文件系统监听器会在 `agent` 启动时立即发现 `~/.cursor/chats/*/<session>/meta.json`，无需等待 Transcript；提交 Prompt 后，`prompt_history.json` 的变化会立即更新会话卡片、工作状态与 Conversation。随后 `~/.cursor/projects/*/agent-transcripts` 出现时，Dashboard 会无重复地合并待处理的用户消息，补充原生标题、项目、轮次与子 Agent，并保存主会话及子 Agent JSONL 快照。
-
-Cursor 卡片显示原生会话标题，副标题为 `Cursor · <项目>` 以及轮次和子 Agent 信息。设置页提供独立可编辑的 **Cursor 定价**，覆盖 Cursor Grok、Composer 与已公布的第三方模型，不会误用 Claude 或 Codex 费率。可用 `DASHBOARD_CURSOR_HOME` 覆盖来源目录，并用 `DASHBOARD_CURSOR_SYNC_MS` 调整轮询兜底；设为 `0` 只会禁用周期扫描，实时文件系统监听仍保持启用。
-
 ### 多语言支持（i18n）
 
 Dashboard 内置多语言界面，支持 `en`、`zh`、`vi`、`ko`、`es` 五种语言，适用于跨语言协作和团队共享。语言选择使用自定义下拉菜单，便于未来继续扩展。
@@ -316,8 +310,6 @@ flowchart LR
 
 Dashboard 提供全面的功能来监控和分析你的 Claude Code 会话和 Agent：
 
-> **内置 Cursor 支持：** CCAM 会从 `~/.cursor/projects/*/agent-transcripts` 发现 Cursor 原生历史，使用 `~/.cursor/chats` 元数据补全信息，以独立的 `cursor` 提供商保存，并在 Cursor 清理文件前创建会话快照。选择 Claude Code 仪表板范围时会自动包含 Cursor。目前远程 SSH 数据源只镜像 Claude Code 和 Codex 主目录；若要导入远程 Cursor，请将其主目录挂载或暴露到本机，并通过 `DASHBOARD_CURSOR_HOME` 指定。
-
 | 功能 | 描述 |
 |------|------|
 | **任务进度** | 根据 Provider 实际暴露的状态按 Agent 归属跟踪任务：当前 Claude 的 `TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` 与任务生命周期事件、旧版 `TodoWrite`，以及直接调用或统一 `exec` 包装的 Codex `update_plan`。有任务状态的会话会在 Sessions 表格和 Dashboard 的每张 Agent 卡片中，于状态徽标旁显示相同的小型环形进度图及悬停/聚焦 Tooltip；会话详情则显示完整进度面板，包括状态分段、当前任务、Agent 归属统计，以及每页 10 行的任务列表。进度只属于最新的顶层工作：新的 Claude 用户回合或 Codex 任务没有暴露 tracker 时会清除旧状态；回合/任务结束却没有最终更新时，也会丢弃未完成状态。已完全完成的历史仍会保留。 |
@@ -340,7 +332,7 @@ Dashboard 提供全面的功能来监控和分析你的 Claude Code 会话和 Ag
 | **对话记录快照保留** | Claude Code、Codex 和 Cursor 会在 TTL 到期后删除自身的对话记录，因此仪表板在其数据目录中保留持久快照，Conversation 标签页始终提供更完整的那份副本。在不削弱这一保障的前提下限制增长：原始文件已不存在的 Claude Code 和 Cursor 快照在校验往返后进行 gzip 压缩（默认开启，`DASHBOARD_SNAPSHOT_COMPRESS=0` 可关闭）；清理会话时一并删除其快照；可选上限（`DASHBOARD_SNAPSHOT_MAX_AGE_DAYS` / `DASHBOARD_SNAPSHOT_MAX_BYTES`，默认不设置）按会话整体清理旧的已结束会话。**设置 → 对话记录快照** 显示各提供方的占用空间，并且只有在试运行预览之后才会执行清理。 上限是"绝不丢失对话记录"的唯一可选例外：它们可能删除旧对话仅存的副本。 |
 | **通知** | 基于 Web Push (VAPID) 的持久化浏览器通知。即使 Dashboard 标签页未聚焦或浏览器已关闭也能送达。特别针对 macOS 音效支持进行了配置。支持按事件配置开关及订阅管理 |
 | **更新提醒** | 服务端定期以非阻塞方式执行 `git fetch`，将本地检出与所选规范远程的默认分支对比。**支持分支与 fork：** 若同时存在 `upstream` 和 `origin`，优先使用 `upstream`（fork 的常规约定）；命令也会根据用户处境调整——只有在本地分支真正跟踪规范引用时才建议 `git pull --ff-only`，否则给出 `git fetch`（fork 场景下加上 fast-forward 合并），让命令永不撒谎。侧边栏还有常驻的"检查更新"按钮及状态徽标。Dashboard **不会**自行拉取或重启——用户在终端中手动执行命令——因此该机制不会破坏开发会话、pm2/systemd/Docker 进程管理，也不会留下孤立进程 |
-| **设置** | 系统信息、Hook 状态、模型定价管理、通知偏好、数据导出**与恢复**（Import History 面板的 **Restore backup** 模式接受一个不超过 25 MiB 的导出 `.json`，并以幂等、非覆盖方式重新导入，因此可将多台机器的历史合并到一个仪表盘）、会话清理。Model Pricing 将 **Anthropic Claude Model Pricing** 与 **OpenAI GPT Model Pricing** 分开显示，两者使用相同的标题布局，提供按提供方生效的 **Reset Defaults** 和 **Add Model** 控件。标题旁的信息浮层说明首条匹配规则、SQL 风格 `%` 通配符、手动价格更新与 API 费率注意事项；GPT 浮层还说明每百万 Token 的美元单位、标准和 Fast 费率共同采用的 272K Short/Long 分界，以及未公布的费率为何保持未定价而不是被估算。**Dashboard Data** 控件会立即重新获取 Claude Code、Codex 或两者的会话、Agent、事件、Token、工作流、分析和成本。独立的 Claude Code 和 Codex 主目录输入框完整支持 i18n，并可在运行时保存；保存 Codex 主目录后会重新启用实时 rollout 监控并扫描新目录树。 |
+| **设置** | 系统信息、Hook 状态、模型定价管理、通知偏好、数据导出**与恢复**（Import History 面板的 **Restore backup** 模式接受一个不超过 25 MiB 的导出 `.json`，并以幂等、非覆盖方式重新导入，因此可将多台机器的历史合并到一个仪表盘）、会话清理。Model Pricing 将 **Anthropic Claude Model Pricing** 与 **OpenAI GPT Model Pricing** 分开显示，两者使用相同的标题布局，提供按提供方生效的 **Reset Defaults** 和 **Add Model** 控件。标题旁的信息浮层说明首条匹配规则、SQL 风格 `%` 通配符、手动价格更新与 API 费率注意事项；GPT 浮层还说明每百万 Token 的美元单位、标准和 Fast 费率共同采用的 272K Short/Long 分界，以及未公布的费率为何保持未定价而不是被估算。 第三个 **Cursor 模型定价** 表覆盖 Cursor 原生模型（Grok、Composer）及其第三方模型目录，因此 Cursor 成本不会借用 Claude 或 GPT 费率。**Dashboard Data** 控件会立即重新获取 Claude Code、Codex 或两者的会话、Agent、事件、Token、工作流、分析和成本。独立的 Claude Code 和 Codex 主目录输入框完整支持 i18n，并可在运行时保存；保存 Codex 主目录后会重新启用实时 rollout 监控并扫描新目录树。 |
 | **Codex Agent 配置** | Agent Config 的 Codex 一侧会读取完整的本地账户模型目录，不受通用预览限制影响，因此 Models 标签不会错误显示为 0，并始终包含基础/配置文件覆盖。可直接在应用中创建标准 Codex `<name>.config.toml` 覆盖层；每张卡均可一键复制其准确的 `codex --profile <name>` 命令并打开受保护的编辑器。预览路径会先规范化再做包含检查。编辑器拒绝受信任根目录下的符号链接路径组件，验证规范化父目录仍位于允许范围内，并拒绝保存含 `[redacted]` 的预览内容。配置文件、Hook、规则、技能和指令共用 Claude 风格的 **View source / Copy path / Edit / Delete** 操作。每次允许的删除都需确认并先创建备份（技能保留完整目录）；`config.toml` 永远只能编辑。 |
 | **MCP 服务器（本地）** | 位于 `mcp/` 的完整本地 MCP 服务器，支持三种传输模式，16 个领域模块共 103 个类型化工具。覆盖应用支持的全部操作：带作用域的数据读取、Transcript 与图片、Claude/Cursor/GPT 定价、工作流、告警、Webhook、导入与恢复、Claude/Codex 配置、Run Agent、远程数据源、Hook/Home/更新、推送与维护。所有传输共享同一套已验证目录，并支持分层变更/破坏性门控。直接回环 HTTP 可携带 Bearer Token，带 Token 的容器主机别名必须使用 HTTPS。请求拒绝重定向；历史上传限制为单文件 50 MiB、每次调用合计 100 MiB，二进制响应限制为 10 MiB，备份恢复限制为 25 MiB |
 | **工作流** | 基于 D3.js 的可视化页面，包含 11 个交互式模块：Agent 编排 DAG、工具执行 Sankey 图、协作网络、子 Agent 有效性（按周 sparkline 通过 portal 渲染——可越过卡片的 `overflow:hidden`，并自动夹在视口内不再被裁切）、检测到的流程模式、模型委派流、错误传播图（带比率徽章的水平条形图、Agent 类型分解、API/会话错误卡片）、并发时间线、会话复杂度散点图、压缩影响分析和按会话下钻。**全方位、多语言的丰富 tooltip：** 每个图表标题旁都有一个 `i` 图标，可弹出结构化的「此图展示了什么 / 如何阅读 / 为何重要」浮层；悬停节点、边、条、气泡都会显示带有确定性、值相关解读的多段 tooltip（例如占源/占目标比例、成功率健康分级、Opus / Sonnet / Haiku 模型系列说明，以及前段/中段/后段等时间模式）。六张总览统计卡片各自在右下角带一个信息浮层，用自然语言解释指标的计算方式与当前数值含义。Tooltip 通过每张图唯一的 DOM ref 直接更新，并附带容器级 `mouseleave` 兜底，绝不会落后于光标或在重新渲染后残留。点击 **检测到的工作流模式** 中的任意一行会就地展开详情面板，包含完整步骤序列、统计网格、确定性叙述（循环检测、频率分级）和一条务实的建议。状态筛选标签（仅活跃 / 已完成 / 全部）可筛选全部 11 个模块。支持交叉筛选、JSON 导出和 3 秒防抖的实时 WebSocket 自动刷新。**工作流运行**面板呈现「动态工作流」——由 `Workflow` 工具（及自定节奏的 `/loop`）派生的 sub-agent 群组——它们不触发任何 hook，因此改为依据磁盘上的运行日志（`workflows/wf_<runId>.json`）重建：每次运行展示其阶段以及按 Agent 的 token / 工具调用 / 时长分解，并在日志写入前实时检测 `running` 状态，同时在每个会话详情页提供一个关联子区块 |
@@ -406,6 +398,8 @@ Codex 的 `/rename` 标题会从原生会话索引读取，并实时更新会话
 Claude Code 和 Codex 卡片都会在各自提供方原生标题下显示最近不同用户提示的紧凑两行历史，因此简短友好的名称或简短跟进都不会隐藏当前任务。Claude 会在实时 Hook、导入和 watchdog 扫描期间从本地 transcript 缓存刷新该上下文；Codex 会从 rollout 记录刷新，并为旧导入回退到持久化的 `user_message` 事件。Transcript 会在可用时渲染 Claude Code 和 Codex 已持久化的 PNG/JPEG/GIF/WebP 附件，并将 Codex 重复的 response/event 副本合并为一条用户回合。
 
 Codex 的 `response_item` 工具调用会通过独立 rollout cursor 仅索引一次，因此 Workflows 工具流、会话 drill-in、模型/Token 总计和 `context_compacted` 次数都忠实反映已记录的 Codex 数据，而不会重放生命周期或 Token 计数器。当仪表板范围仅为 Codex 时，仅适用于 Claude Code journal 的 Dynamic Workflows 面板会隐藏，而不会显示空的 Codex 数据。
+
+Cursor 无需 Hook，也无需单独的设置选项：选择 **Claude Code** 即同时监控 Cursor。文件系统监听器监视 `~/.cursor/chats` 与 `~/.cursor/projects/*/agent-transcripts`，在 `agent` 启动时立即创建会话，每次提交提示时更新其卡片与 Conversation，并在 Cursor 清理自身历史之前为主 Agent 和子 Agent 的 JSONL 生成快照。可通过 `DASHBOARD_CURSOR_HOME` 覆盖来源目录；远程 SSH 数据源目前仅镜像 Claude Code 与 Codex 目录。
 
 ### 3. 启动
 
