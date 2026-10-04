@@ -113,6 +113,10 @@ import { Copy, Check } from "lucide-react";
 
 // ───────────────────────── Copy button ─────────────────────────
 
+/**
+ * Icon button that copies text to the clipboard and shows a check for 1.5 seconds. Does nothing
+ * when the clipboard is unavailable.
+ */
 export function CopyButton({ text }: { text: string }) {
   const { t } = useTranslation("common");
   const [copied, setCopied] = useState(false);
@@ -142,6 +146,10 @@ export function CopyButton({ text }: { text: string }) {
 
 // ───────────────────────── Terminal (command) ─────────────────────────
 
+/**
+ * Terminal-styled block for a shell command, with an optional `# description` comment line and a
+ * copy button.
+ */
 export function Terminal({ command, description }: { command: string; description?: string }) {
   return (
     <div className="relative bg-black/70 border border-border rounded font-mono text-[11px] overflow-hidden">
@@ -162,6 +170,10 @@ export function Terminal({ command, description }: { command: string; descriptio
 
 // ───────────────────────── Terminal output (stdout/stderr) ─────────────────────────
 
+/**
+ * Command output block for a Bash tool result: stdout and stderr in separate sections, plus an
+ * interrupted marker and the exit code when known.
+ */
 export function TerminalOutput({
   stdout,
   stderr,
@@ -200,6 +212,7 @@ export function TerminalOutput({
   );
 }
 
+/** One labelled output section; stderr is tinted red. */
 function OutputBlock({
   label,
   text,
@@ -225,6 +238,14 @@ function OutputBlock({
 
 // ───────────────────────── Line-numbered code ─────────────────────────
 
+/**
+ * Read-only code block with a line-number gutter, scrolling past `maxHeight`.
+ *
+ * @param props.text - Code to show.
+ * @param props.maxHeight - CSS max height; defaults to `24rem`.
+ * @param props.startLine - Number of the first line, for excerpts; defaults to 1.
+ * @param props.label - Optional caption, such as the file path.
+ */
 export function LineNumberedCode({
   text,
   maxHeight = "24rem",
@@ -265,14 +286,27 @@ export function LineNumberedCode({
 
 // ───────────────────────── Unified diff ─────────────────────────
 
+/**
+ * One hunk of a unified diff, taken from the tool response's `structuredPatch` or computed from the
+ * old and new strings.
+ */
 export type DiffHunk = {
+  /** First line of the hunk in the old file. */
   oldStart: number;
+  /** First line of the hunk in the new file. */
   newStart: number;
+  /** Number of old-file lines the hunk covers. */
   oldLines: number;
+  /** Number of new-file lines the hunk covers. */
   newLines: number;
+  /** Hunk body lines, each prefixed with `+`, `-`, or a space. */
   lines: string[];
 };
 
+/**
+ * Unified diff view for Edit and Write tool calls, one section per hunk; shows `no diff` when there
+ * are no hunks.
+ */
 export function UnifiedDiff({ hunks }: { hunks: DiffHunk[] }) {
   if (hunks.length === 0) {
     return <p className="text-[11px] text-gray-500 italic">no diff</p>;
@@ -288,6 +322,10 @@ export function UnifiedDiff({ hunks }: { hunks: DiffHunk[] }) {
   );
 }
 
+/**
+ * One diff hunk: the `@@` header, then each line with old and new line numbers, green for additions
+ * and red for removals.
+ */
 function HunkView({ hunk }: { hunk: DiffHunk }) {
   let oldLine = hunk.oldStart;
   let newLine = hunk.newStart;
@@ -333,6 +371,10 @@ function HunkView({ hunk }: { hunk: DiffHunk }) {
 
 // ───────────────────────── Key-value card ─────────────────────────
 
+/**
+ * Two-column key/value view of a tool's input. Keys listed in `priority` come first in that order,
+ * and the rest follow in object order.
+ */
 export function KeyValueCard({
   data,
   priority = [],
@@ -369,6 +411,11 @@ export function KeyValueCard({
   );
 }
 
+/**
+ * Render one value by type: a true/false chip for booleans, monospace for numbers, plain text for
+ * strings, and pretty-printed JSON for objects and arrays. `null` and `undefined` show as an italic
+ * `null`.
+ */
 function ValueCell({ value }: { value: unknown }) {
   if (value == null) return <span className="text-gray-500 italic">null</span>;
   if (typeof value === "boolean")
@@ -413,6 +460,13 @@ function ValueCell({ value }: { value: unknown }) {
   );
 }
 
+/**
+ * JSON-stringify a value with indentation, falling back to `String(value)` for values JSON cannot
+ * serialize, such as circular structures.
+ *
+ * @param value - Any value.
+ * @returns The text to display.
+ */
 function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -423,6 +477,7 @@ function safeStringify(value: unknown): string {
 
 // ───────────────────────── File list / match list ─────────────────────────
 
+/** Scrollable list of file paths, for example a Glob result; shows `no files` when empty. */
 export function FileList({ paths }: { paths: string[] }) {
   if (paths.length === 0) return <p className="text-[11px] text-gray-500 italic">no files</p>;
   return (
@@ -436,12 +491,20 @@ export function FileList({ paths }: { paths: string[] }) {
   );
 }
 
+/**
+ * One Grep match. Every field is optional because Grep's output mode decides which parts are
+ * present.
+ */
 export type GrepMatch = {
+  /** File the match is in. */
   file?: string;
+  /** 1-based line number of the match. */
   line?: number;
+  /** Matching line text. */
   text?: string;
 };
 
+/** Scrollable list of Grep matches in `file:line: text` form; shows `no matches` when empty. */
 export function MatchList({ matches }: { matches: GrepMatch[] }) {
   if (matches.length === 0) return <p className="text-[11px] text-gray-500 italic">no matches</p>;
   return (
