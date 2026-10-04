@@ -424,7 +424,6 @@ export class DashboardApiClient {
    * @param path - Dashboard API path under `/api/`.
    * @param options - Query, body, and whether the request is idempotent (retry-eligible).
    * @returns The parsed JSON response.
-   * @throws {ApiError} When every allowed attempt fails.
    */
   private async request<T>(method: HttpMethod, path: string, options: RequestOptions): Promise<T> {
     const maxAttempts = options.idempotent ? this.config.retryCount + 1 : 1;
