@@ -131,9 +131,13 @@ function StatusDot({
   pulse,
   tooltip,
 }: {
+  /** Status label, read by screen readers; the dot itself shows no text. */
   label: string;
+  /** Classes for the colored dot. */
   dotClass: string;
+  /** Whether the dot pulses. */
   pulse: boolean;
+  /** Tooltip explaining the status. */
   tooltip: string;
 }) {
   return (
@@ -149,8 +153,11 @@ function StatusDot({
   );
 }
 
+/** Props for {@link AgentStatusBadge}. */
 interface AgentStatusBadgeProps {
+  /** Status to show, after transient states are folded in. */
   status: EffectiveAgentStatus;
+  /** Whether the status dot pulses, for live statuses. */
   pulse?: boolean;
   /** WHY the agent is waiting (from `agentAwaitingReason`); rendered as a
    *  nested icon+label chip with a tooltip. Ignored unless `status` is "waiting". */
@@ -166,6 +173,10 @@ interface AgentStatusBadgeProps {
   variant?: "badge" | "dot";
 }
 
+/**
+ * Status badge for an agent: a colored badge or dot with the status label, a provider-aware
+ * tooltip, and, for waiting agents, a nested chip explaining what the agent is waiting for.
+ */
 export function AgentStatusBadge({
   status,
   pulse,
@@ -211,8 +222,11 @@ export function AgentStatusBadge({
   );
 }
 
+/** Props for {@link SessionStatusBadge}. */
 interface SessionStatusBadgeProps {
+  /** Status to show, after transient states are folded in. */
   status: EffectiveSessionStatus;
+  /** Whether the status dot pulses, for live statuses. */
   pulse?: boolean;
   /** WHY the session is waiting (from `sessionAwaitingReason`); rendered as a
    *  nested icon+label chip with a tooltip. Ignored unless `status` is "waiting". */
@@ -228,6 +242,10 @@ interface SessionStatusBadgeProps {
   variant?: "badge" | "dot";
 }
 
+/**
+ * Status badge for a session: a colored badge or dot with the status label, a provider-aware
+ * tooltip, and, for waiting sessions, a nested chip explaining what the session is waiting for.
+ */
 export function SessionStatusBadge({
   status,
   pulse,
