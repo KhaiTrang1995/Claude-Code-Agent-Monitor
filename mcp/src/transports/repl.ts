@@ -151,7 +151,12 @@ const DOMAIN_COLORS: Record<string, (t: string) => string> = {
   push: c.brightYellow,
 };
 
-/** Renders a `[domain]` badge in that domain's color, or muted if unknown. */
+/**
+ * Renders a `[domain]` badge in that domain's color, or muted if unknown.
+ *
+ * @param domain - Domain name.
+ * @returns The colored badge.
+ */
 function domainBadge(domain: string): string {
   const colorFn = DOMAIN_COLORS[domain] ?? c.muted;
   return colorFn(`[${domain}]`);
@@ -164,6 +169,12 @@ function domainBadge(domain: string): string {
  * `McpServer`: `tools` (from `collectAllTools`) is a flat, directly-
  * invokable handler list, so typing a tool name calls its handler
  * in-process, subject to the same `AppConfig` policy flags.
+ *
+ * @param config - Resolved MCP configuration.
+ * @param api - Dashboard API client the tools use.
+ * @param logger - Logger for errors.
+ * @param tools - Every registered tool with its domain.
+ * @returns A promise that resolves once the REPL has started.
  */
 export async function startRepl(
   config: AppConfig,
@@ -243,6 +254,13 @@ export async function startRepl(
  * take precedence. `health`/`stats`/`status` are shortcuts invoking
  * `dashboard_health_check`/`dashboard_get_stats`/
  * `dashboard_get_operational_snapshot` with no arguments.
+ *
+ * @param input - The line the user entered.
+ * @param config - Resolved configuration, for the `config` command.
+ * @param _api - Dashboard API client (unused here).
+ * @param tools - Every registered tool.
+ * @param toolMap - Tools by name, for invocation.
+ * @param logger - Logger for errors.
  */
 async function handleCommand(
   input: string,
@@ -309,7 +327,13 @@ async function handleCommand(
 /** Invokes a tool handler by name directly (no MCP protocol), printing an
  * "Invoking..." line then the formatted result/error. This is the REPL's
  * own error boundary — a thrown error is caught/logged here, not converted
- * to a `CallToolResult`. Args pass through unvalidated (no Zod check). */
+ * to a `CallToolResult`. Args pass through unvalidated (no Zod check).
+ *
+ * @param name - Tool name.
+ * @param args - Arguments for the tool.
+ * @param toolMap - Tools by name.
+ * @param logger - Logger for errors.
+ */
 async function invokeToolByName(
   name: string,
   args: Record<string, unknown>,
@@ -342,7 +366,11 @@ async function invokeToolByName(
 
 /** Parses REPL tool args as a JSON object literal, or (if that fails)
  * space-separated `key=value` pairs with `true`/`false`/numeric coercion.
- * Not schema-aware. Empty input returns `{}`. */
+ * Not schema-aware. Empty input returns `{}`.
+ *
+ * @param raw - Text typed after the tool name.
+ * @returns The arguments object.
+ */
 function parseArgs(raw: string): Record<string, unknown> {
   if (!raw) return {};
   try {
@@ -402,7 +430,11 @@ function printHelp(): void {
 }
 
 /** Prints a table of tools (name, domain, truncated description) for
- * `tools`/`tools <domain>` (case-insensitive domain match). */
+ * `tools`/`tools <domain>` (case-insensitive domain match).
+ *
+ * @param tools - Every registered tool.
+ * @param domainFilter - Only list tools in this domain.
+ */
 function printToolList(tools: ToolEntry[], domainFilter?: string): void {
   const filtered = domainFilter
     ? tools.filter((t) => t.domain === domainFilter.toLowerCase())
@@ -445,7 +477,11 @@ function printToolList(tools: ToolEntry[], domainFilter?: string): void {
   );
 }
 
-/** Prints tool counts per domain (sorted) for the `domains` command. */
+/**
+ * Prints tool counts per domain (sorted) for the `domains` command.
+ *
+ * @param tools - Every registered tool.
+ */
 function printDomains(tools: ToolEntry[]): void {
   const domainCounts = new Map<string, number>();
   for (const t of tools) {
@@ -465,7 +501,10 @@ function printDomains(tools: ToolEntry[]): void {
 }
 
 /** Prints the resolved {@link AppConfig} for `config`, including the live
- * Mutations/Destructive policy state (warning color when enabled). */
+ * Mutations/Destructive policy state (warning color when enabled).
+ *
+ * @param config - Resolved configuration.
+ */
 function printConfig(config: AppConfig): void {
   process.stdout.write(sectionHeader("Configuration"));
   const pairs: [string, string][] = [

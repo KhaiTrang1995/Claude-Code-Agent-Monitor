@@ -300,7 +300,12 @@ const isColorSupported =
 
 /** Builds a styling function wrapping text in ANSI open/close codes, or an
  * identity function when colors are unsupported — every color/modifier
- * below is built with this, so disabling color no-ops all of them at once. */
+ * below is built with this, so disabling color no-ops all of them at once.
+ *
+ * @param open - SGR code that starts the style.
+ * @param close - SGR code that ends it.
+ * @returns A function wrapping text in the two codes.
+ */
 function wrap(open: string, close: string): (text: string) => string {
   if (!isColorSupported) return (text) => text;
   return (text) => `\x1b[${open}m${text}\x1b[${close}m`;
@@ -462,13 +467,22 @@ export const bgGray = wrap("100", "49");
 // 256-color support
 
 /** Foreground-color function for an xterm 256-color index; not currently
- * used by any composable style below. */
+ * used by any composable style below.
+ *
+ * @param code - xterm 256-color index, 0 to 255.
+ * @returns A function coloring text with that foreground.
+ */
 export function fg256(code: number): (text: string) => string {
   if (!isColorSupported) return (text) => text;
   return (text) => `\x1b[38;5;${code}m${text}\x1b[39m`;
 }
 
-/** Background-color function for an xterm 256-color index. */
+/**
+ * Background-color function for an xterm 256-color index.
+ *
+ * @param code - xterm 256-color index, 0 to 255.
+ * @returns A function coloring text with that background.
+ */
 export function bg256(code: number): (text: string) => string {
   if (!isColorSupported) return (text) => text;
   return (text) => `\x1b[48;5;${code}m${text}\x1b[49m`;
@@ -479,26 +493,69 @@ export function bg256(code: number): (text: string) => string {
 export const reset = isColorSupported ? "\x1b[0m" : "";
 
 /** Strips ANSI SGR sequences from `text`. Used throughout `ui/formatter.ts`
- * to measure/pad colored strings by visible length, not byte length. */
+ * to measure/pad colored strings by visible length, not byte length.
+ *
+ * @param text - Possibly colored text.
+ * @returns The text without SGR codes.
+ */
 export function stripAnsi(text: string): string {
   return text.replace(/\x1b\[[0-9;]*m/g, "");
 }
 
 // Composable styles
 /** Semantic style aliases used throughout `ui/banner.ts`, `ui/formatter.ts`,
- * and `transports/repl.ts` so call sites express intent, not a specific color. */
+ * and `transports/repl.ts` so call sites express intent, not a specific color.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const success = (t: string) => bold(green(t));
-/** Style for error messages: bold red. */
+/**
+ * Style for error messages: bold red.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const error = (t: string) => bold(red(t));
-/** Style for warnings: bold yellow. */
+/**
+ * Style for warnings: bold yellow.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const warn = (t: string) => bold(yellow(t));
-/** Style for informational notices: bold cyan. */
+/**
+ * Style for informational notices: bold cyan.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const info = (t: string) => bold(cyan(t));
-/** Style for secondary text such as hints, timestamps, and separators: dim gray. */
+/**
+ * Style for secondary text such as hints, timestamps, and separators: dim gray.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const muted = (t: string) => dim(gray(t));
-/** Style for emphasized values the user should notice: bold bright magenta. */
+/**
+ * Style for emphasized values the user should notice: bold bright magenta.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const highlight = (t: string) => bold(brightMagenta(t));
-/** Style for field labels in key/value output: bold bright white. */
+/**
+ * Style for field labels in key/value output: bold bright white.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const label = (t: string) => bold(brightWhite(t));
-/** Style for accents such as headings and prompts: bold bright cyan. */
+/**
+ * Style for accents such as headings and prompts: bold bright cyan.
+ *
+ * @param t - Text to style.
+ * @returns The styled text, or `t` unchanged when colors are disabled.
+ */
 export const accent = (t: string) => bold(brightCyan(t));
