@@ -137,8 +137,12 @@ import { SnapshotStorage, formatStorageBytes } from "../components/SnapshotStora
 import type { CursorModelPricing, GptModelPricing, ModelPricing, WSMessage } from "../lib/types";
 import { useDataScope, type ProviderScope } from "../lib/dataScope";
 
-// In-page navigation for the (dense) Settings screen. Each entry maps to a
-// `<section id>` rendered below; the TOC scroll-spies the active one.
+/**
+ * In-page navigation for the dense Settings screen. Each entry maps to a `<section id>` rendered
+ * below, in page order (data display, the three pricing tables, hooks, session homes, import,
+ * remote sources, Tabby, sound, notifications, alerts, data, and about); the table of contents
+ * scroll-spies the active one.
+ */
 const SETTINGS_SECTIONS: {
   id: string;
   labelKey: string;
@@ -166,8 +170,10 @@ const SETTINGS_SECTIONS: {
   { id: "about", labelKey: "about.title", Icon: Server },
 ];
 
-// Keys that change a range input's value - the only ones that should trigger a
-// volume preview cue (Tab / Enter / character keys must stay silent).
+/**
+ * Keys that change a range input's value. Only these trigger a volume preview cue, so Tab, Enter,
+ * and character keys stay silent while the user navigates the sound settings.
+ */
 const VOLUME_PREVIEW_KEYS = new Set([
   "ArrowUp",
   "ArrowDown",
@@ -181,16 +187,36 @@ const VOLUME_PREVIEW_KEYS = new Set([
 
 // ─── Notification preferences ───
 
+/**
+ * localStorage key for the browser-notification preferences. Shared with `useNotifications`, which
+ * reads it to decide what to notify about, and with the command palette, which reads the master
+ * toggle.
+ */
 const NOTIF_KEY = "agent-monitor-notifications";
 
+/**
+ * Browser-notification preferences edited in the Notifications section and stored under {@link
+ * NOTIF_KEY}.
+ */
 interface NotifPrefs {
+  /**
+   * Master switch; when false no browser notifications are shown regardless of the options below.
+   */
   enabled: boolean;
+  /** Notify when a new session starts. */
   onNewSession: boolean;
+  /** Notify when a session ends in an error. */
   onSessionError: boolean;
+  /** Notify when a session completes. */
   onSessionComplete: boolean;
+  /** Notify when a subagent is spawned. */
   onSubagentSpawn: boolean;
 }
 
+/**
+ * Defaults for a browser that has no stored preferences: notifications off, and once enabled, only
+ * new sessions and session errors notify.
+ */
 const defaultNotif: NotifPrefs = {
   enabled: false,
   onNewSession: true,
@@ -199,6 +225,13 @@ const defaultNotif: NotifPrefs = {
   onSubagentSpawn: false,
 };
 
+/**
+ * Read notification preferences from localStorage, filling any missing keys from {@link
+ * defaultNotif} so preferences saved by older versions keep working.
+ *
+ * @returns The stored preferences, or the defaults when nothing is stored or storage is
+ * unavailable.
+ */
 function loadNotifPrefs(): NotifPrefs {
   try {
     const raw = localStorage.getItem(NOTIF_KEY);
@@ -209,32 +242,59 @@ function loadNotifPrefs(): NotifPrefs {
   }
 }
 
+/**
+ * Persist notification preferences to localStorage.
+ *
+ * @param prefs - Preferences to store.
+ */
 function saveNotifPrefs(prefs: NotifPrefs) {
   localStorage.setItem(NOTIF_KEY, JSON.stringify(prefs));
 }
 
 // ─── Helpers ───
 
+/**
+ * Form state for one row of the Anthropic Claude pricing table while it is being added or edited.
+ * Every rate is kept as the raw input string (USD per million tokens) so partially typed values
+ * survive re-renders; they are converted to numbers on save.
+ */
 interface EditRow {
+  /** Model id pattern the rule prices; `%` is an SQL-style wildcard. */
   model_pattern: string;
+  /** Name shown in the table and cost breakdowns. */
   display_name: string;
+  /** Standard input rate. */
   input_per_mtok: string;
+  /** Standard output rate. */
   output_per_mtok: string;
+  /** Cache read rate. */
   cache_read_per_mtok: string;
+  /** 5-minute cache write rate. */
   cache_write_per_mtok: string;
+  /** 1-hour cache write rate. */
   cache_write_1h_per_mtok: string;
+  /** Fast-mode input rate. */
   fast_input_per_mtok: string;
+  /** Fast-mode output rate. */
   fast_output_per_mtok: string;
-  // Time-limited introductory rates. intro_until empty ⇒ no promo (the intro_*
-  // values are ignored). Generic: any model can carry a promo window.
+  /**
+   * Last day (YYYY-MM-DD, inclusive) of a time-limited introductory rate window. Empty means no
+   * promo and the `intro_*` values are ignored. Any model can carry a promo window.
+   */
   intro_until: string;
+  /** Introductory input rate. */
   intro_input_per_mtok: string;
+  /** Introductory output rate. */
   intro_output_per_mtok: string;
+  /** Introductory cache read rate. */
   intro_cache_read_per_mtok: string;
+  /** Introductory 5-minute cache write rate. */
   intro_cache_write_per_mtok: string;
+  /** Introductory 1-hour cache write rate. */
   intro_cache_write_1h_per_mtok: string;
 }
 
+/** Blank {@link EditRow} used when adding a rule: empty names, zero rates, and no promo window. */
 const emptyRow: EditRow = {
   model_pattern: "",
   display_name: "",
@@ -253,22 +313,46 @@ const emptyRow: EditRow = {
   intro_cache_write_1h_per_mtok: "0",
 };
 
+/** Hook installation status for one provider (Claude Code or Codex), from `/api/settings/info`. */
 interface HookProviderStatus {
+  /** True when every hook event the dashboard needs points at its hook handler. */
   installed: boolean;
+  /**
+   * True when at least one dashboard hook is present, so an install will update rather than add
+   * entries.
+   */
   has_dashboard_hooks?: boolean;
+  /**
+   * True when the config file has any hooks at all, including other tools' hooks, which an install
+   * preserves.
+   */
   has_existing_hooks?: boolean;
+  /**
+   * Path of the settings file the status was read from (`~/.claude/settings.json` or
+   * `~/.codex/hooks.json`).
+   */
   path: string;
+  /** For each hook event, whether the dashboard's handler is registered. */
   hooks: Record<string, boolean>;
 }
 
+/** Response of `/api/settings/info`, shown across the Hooks, Data, and About sections. */
 interface SystemInfo {
+  /** SQLite database path, file size in bytes, and row counts per table. */
   db: { path: string; size: number; counts: Record<string, number> };
+  /**
+   * Claude Code hook status (legacy top-level fields), plus per-provider status under `providers`.
+   */
   hooks: {
     installed: boolean;
     path: string;
     hooks: Record<string, boolean>;
     providers?: Record<"claude" | "codex", HookProviderStatus>;
   };
+  /**
+   * Dashboard version, uptime in seconds, Node.js version, platform, and the number of open
+   * WebSocket connections.
+   */
   server: {
     version: string;
     uptime: number;
@@ -276,9 +360,18 @@ interface SystemInfo {
     platform: string;
     ws_connections: number;
   };
+  /** Transcript snapshot storage and retention policy; absent from older servers. */
   snapshots?: SnapshotStorageInfo;
 }
 
+/**
+ * Format a database timestamp for display in the current UI locale. SQLite `datetime('now')` values
+ * have no zone marker and are UTC, so a bare `YYYY-MM-DD HH:MM:SS` is treated as UTC; ISO strings
+ * with `Z` or an offset are used as-is.
+ *
+ * @param iso - Timestamp from the API.
+ * @returns Localized date and time.
+ */
 function formatTimestamp(iso: string): string {
   const normalized =
     /[Zz]$/.test(iso) || /[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso.replace(" ", "T") + "Z";
@@ -292,8 +385,17 @@ function formatTimestamp(iso: string): string {
   });
 }
 
+/**
+ * Byte formatter shared with the snapshot storage panel, so sizes read the same across Settings.
+ */
 const formatBytes = formatStorageBytes;
 
+/**
+ * Compact uptime, for example `3d 4h 12m`, `5h 2m`, or `17m`.
+ *
+ * @param seconds - Uptime in seconds.
+ * @returns The formatted duration.
+ */
 function formatUptime(seconds: number): string {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
@@ -314,6 +416,15 @@ function formatUsdRate(rate: number): string {
   }).format(rate);
 }
 
+/**
+ * Animate a number toward `end` with an ease-out curve over `durationMs`, starting from the
+ * currently displayed value, using requestAnimationFrame. Used for the stat counters so a refresh
+ * glides to the new value instead of jumping. Resets to 0 when `end` is null.
+ *
+ * @param end - Target value, or null to reset.
+ * @param durationMs - Animation length; defaults to 1 second.
+ * @returns The value to render for the current frame.
+ */
 function useCountUp(end: number | null, durationMs = 1000) {
   const [count, setCount] = useState(0);
 
@@ -350,6 +461,10 @@ function useCountUp(end: number | null, durationMs = 1000) {
 
 // ─── Toggle component ───
 
+/**
+ * Labelled on/off switch with an optional description, exposed to assistive technology as
+ * `role="switch"` with `aria-checked`.
+ */
 function Toggle({
   checked,
   onChange,
@@ -490,6 +605,10 @@ function PricingInfoTooltip({ provider = "claude" }: { provider?: "claude" | "cu
   );
 }
 
+/**
+ * Editable rate columns of the OpenAI GPT pricing table, in display order: standard short context
+ * (input at most 272K tokens), standard long context, then Fast mode short and long.
+ */
 const GPT_RATE_FIELDS = [
   "short_input_per_mtok",
   "short_cached_input_per_mtok",
@@ -508,9 +627,19 @@ const GPT_RATE_FIELDS = [
   "fast_long_cache_write_per_mtok",
   "fast_long_output_per_mtok",
 ] as const;
+/** One rate column of the GPT pricing table. */
 type GptRateField = (typeof GPT_RATE_FIELDS)[number];
+/**
+ * Form state for adding or editing a GPT pricing rule; rates are kept as raw input strings until
+ * saved.
+ */
 type GptDraft = Record<"model_pattern" | "display_name" | GptRateField, string>;
 
+/**
+ * Blank GPT draft with empty names and every rate at 0.
+ *
+ * @returns A new draft object.
+ */
 function emptyGptDraft(): GptDraft {
   return Object.fromEntries([
     ["model_pattern", ""],
@@ -519,6 +648,11 @@ function emptyGptDraft(): GptDraft {
   ]) as GptDraft;
 }
 
+/**
+ * OpenAI GPT pricing table (used for Codex sessions). Lists, adds, edits, and deletes rules through
+ * `api.pricing` GPT endpoints and reloads whenever `resetRevision` changes. When the server
+ * predates the GPT endpoints, it stays empty instead of breaking the rest of Settings.
+ */
 function GptPricingTable({
   resetRevision,
   resetConfirming,
@@ -811,15 +945,26 @@ function GptPricingTable({
   );
 }
 
+/** Editable rate columns of the Cursor pricing table. */
 const CURSOR_RATE_FIELDS = [
   "input_per_mtok",
   "cache_write_per_mtok",
   "cache_read_per_mtok",
   "output_per_mtok",
 ] as const;
+/** One rate column of the Cursor pricing table. */
 type CursorRateField = (typeof CURSOR_RATE_FIELDS)[number];
+/**
+ * Form state for adding or editing a Cursor pricing rule; rates are kept as raw input strings until
+ * saved.
+ */
 type CursorDraft = Record<"model_pattern" | "display_name" | CursorRateField, string>;
 
+/**
+ * Blank Cursor draft with empty names and every rate at 0.
+ *
+ * @returns A new draft object.
+ */
 function emptyCursorDraft(): CursorDraft {
   return Object.fromEntries([
     ["model_pattern", ""],
@@ -828,6 +973,11 @@ function emptyCursorDraft(): CursorDraft {
   ]) as CursorDraft;
 }
 
+/**
+ * Cursor pricing table. Lists, adds, edits, and deletes Cursor rate rules through the `api.pricing`
+ * Cursor endpoints and reloads whenever `resetRevision` changes. Cursor sessions are priced only
+ * from this table, never from Claude or GPT rates.
+ */
 function CursorPricingTable({
   resetRevision,
   resetConfirming,
@@ -1056,6 +1206,12 @@ function CursorPricingTable({
   );
 }
 
+/**
+ * Modal for installing hooks. The user picks Claude Code, Codex, or both (Claude Code is
+ * preselected each time it opens); installing calls `api.settings.installHooks` and shows the
+ * installer output. Existing hooks from other tools are preserved, and `onInstalled` refreshes the
+ * status afterwards.
+ */
 function HookInstallModal({
   open,
   status,
@@ -1225,6 +1381,23 @@ function HookInstallModal({
 
 // ─── Main component ───
 
+/**
+ * Settings page. One long page with a scroll-spy table of contents, covering:
+ *
+ * - Dashboard data scope.
+ * - The Claude, Cursor, and GPT pricing tables, with total cost.
+ * - Hook status and installation.
+ * - Claude Code and Codex home directories.
+ * - History import and backup restore.
+ * - Remote SSH sources.
+ * - Tabby, sound cues, and browser notifications.
+ * - Alert rules and webhooks.
+ * - Data export, snapshot storage, and cleanup.
+ * - System information.
+ *
+ * Destructive actions (resetting a pricing table, cleanup, and clearing data) require a second
+ * confirming click.
+ */
 export function Settings() {
   const { t } = useTranslation("settings");
   const [pricing, setPricing] = useState<ModelPricing[]>([]);
