@@ -120,18 +120,14 @@ function withLockRetrySync(fn) {
   throw lastError;
 }
 
-async function withLockRetry(fn) {
-  let lastError;
-  for (let attempt = 0; attempt <= LOCK_RETRIES; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      if (!TRANSIENT_LOCK_CODES.has(err && err.code) || attempt === LOCK_RETRIES) break;
-      await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_DELAY_MS * (attempt + 1)));
-    }
-  }
-  throw lastError;
+/** True when `current` is still the same file (inode, size, mtime) as `before`. */
+function isSameFile(current, before) {
+  return (
+    !!current &&
+    current.ino === before.ino &&
+    current.size === before.size &&
+    current.mtimeMs === before.mtimeMs
+  );
 }
 
 function tempPathFor(target) {
@@ -462,7 +458,15 @@ async function compressSnapshotFile(jsonlPath) {
     } catch {
       /* keep the archive even if its timestamp can't be preserved */
     }
-    await withLockRetry(() => fs.promises.rename(tmp, gzPath));
+    // From here to the end everything is synchronous: re-check that the plain
+    // file is still exactly what we archived (verification above awaited, so a
+    // sync writer may have replaced it), then install the archive with no
+    // event-loop turn in between.
+    if (!isSameFile(lstatOrNull(jsonlPath), before)) {
+      removeQuietly(tmp);
+      return { ok: false, reason: "changed-during-compression" };
+    }
+    withLockRetrySync(() => fs.renameSync(tmp, gzPath));
   } catch (err) {
     if (handle) {
       try {
@@ -480,18 +484,14 @@ async function compressSnapshotFile(jsonlPath) {
   // sync writer may have replaced it while we awaited (the original came back
   // and grew); that newer, longer copy must survive — the reader prefers the
   // plain file, and its next write drops the now-stale archive.
-  const current = lstatOrNull(jsonlPath);
-  if (
-    !current ||
-    current.ino !== before.ino ||
-    current.size !== before.size ||
-    current.mtimeMs !== before.mtimeMs
-  ) {
+  if (!isSameFile(lstatOrNull(jsonlPath), before)) {
     return { ok: true, bytesBefore: before.size, bytesAfter, plainRemoved: false };
   }
   let plainRemoved = true;
   try {
-    await withLockRetry(() => fs.promises.unlink(jsonlPath));
+    // Synchronous (with sync lock retries) so no writer can slip a newer copy
+    // in between the check above and the delete.
+    withLockRetrySync(() => fs.unlinkSync(jsonlPath));
   } catch {
     // Both copies are now on disk and identical; the reader prefers the plain
     // one and the next maintenance pass retries the removal.

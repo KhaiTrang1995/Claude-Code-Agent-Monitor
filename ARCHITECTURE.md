@@ -1665,7 +1665,11 @@ by default and every prune can be previewed first.
 - **Unreachable data goes with its session.** `POST /api/settings/cleanup`
   (`purge_days`) and `DELETE /api/remote-sources/:id?purge=true` delete the
   purged sessions' snapshots in all three roots. Orphans (no session row) are
-  removed only by an explicit prune with `orphans: true`.
+  removed only by an explicit prune with `orphans: true`. A snapshot belongs
+  to the session named by its filename or to the row whose `transcript_path`
+  points at it — an imported Codex rollout is named by its filename UUID while
+  its row may use `session_meta.payload.id`, so it is never mistaken for an
+  orphan and is still deleted on purge.
 - **Opt-in caps.** `DASHBOARD_SNAPSHOT_MAX_AGE_DAYS` and
   `DASHBOARD_SNAPSHOT_MAX_BYTES` (both unset by default) prune whole finished
   sessions, oldest first by `max(DB activity, snapshot mtime)`; `active`

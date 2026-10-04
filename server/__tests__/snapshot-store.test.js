@@ -195,31 +195,38 @@ describe("compressSnapshotFile + reads", () => {
     assert.equal(JSON.parse(lines[399]).n, 400);
   });
 
-  it("keeps a newer plain copy written while the archive was being finalized", async () => {
+  it("keeps a newer plain copy written while the archive was being verified", async () => {
     const dir = freshDir("race");
     const plain = path.join(dir, "s.jsonl");
     fs.writeFileSync(plain, jsonlLines(30));
     const newer = jsonlLines(40, "newer");
     // Simulate a sync writer replacing the plain file (temp + rename, like
-    // writeSnapshot) in the window after the archive is renamed into place.
-    const realRename = fs.promises.rename;
-    fs.promises.rename = async (from, to) => {
-      await realRename(from, to);
-      if (to === `${plain}.gz`) {
-        const tmp = path.join(dir, ".swap.tmp");
-        fs.writeFileSync(tmp, newer);
-        fs.renameSync(tmp, plain);
+    // writeSnapshot) while the archive is being decompressed for verification
+    // — after the first unchanged-check, before the archive is installed.
+    const realCreateReadStream = fs.createReadStream;
+    fs.createReadStream = (target, ...rest) => {
+      if (String(target).endsWith(".tmp") && String(target).includes(".gz.")) {
+        const swap = path.join(dir, ".swap.tmp");
+        fs.writeFileSync(swap, newer);
+        fs.renameSync(swap, plain);
       }
+      return realCreateReadStream(target, ...rest);
     };
+    let result;
     try {
-      const result = await store.compressSnapshotFile(plain);
-      assert.equal(result.ok, true);
-      assert.equal(result.plainRemoved, false);
+      result = await store.compressSnapshotFile(plain);
     } finally {
-      fs.promises.rename = realRename;
+      fs.createReadStream = realCreateReadStream;
     }
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "changed-during-compression");
     assert.equal(fs.readFileSync(plain, "utf8"), newer, "the newer copy survives");
-    assert.equal(store.resolveSnapshotFile(plain), plain, "reader prefers the plain copy");
+    assert.equal(fs.existsSync(`${plain}.gz`), false, "the stale archive is not installed");
+    assert.deepEqual(
+      fs.readdirSync(dir).filter((f) => f.endsWith(".tmp")),
+      [],
+      "no temp files left behind"
+    );
   });
 
   it("handles multi-byte UTF-8 across chunk boundaries", async () => {

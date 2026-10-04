@@ -483,7 +483,7 @@ router.post("/cleanup", (req, res) => {
     // Only purge completed/error/abandoned sessions, never active
     const toDelete = db
       .prepare(
-        "SELECT id FROM sessions WHERE status IN ('completed','error','abandoned') AND started_at < ?"
+        "SELECT id, transcript_path FROM sessions WHERE status IN ('completed','error','abandoned') AND started_at < ?"
       )
       .all(cutoff);
 
@@ -502,7 +502,10 @@ router.post("/cleanup", (req, res) => {
       result.purged_sessions = toDelete.length;
       // Their transcript snapshots are unreachable without the session row —
       // reclaim them too (all three provider snapshot dirs).
-      const snapshots = deleteSnapshotsForSessions(ids);
+      const snapshots = deleteSnapshotsForSessions(
+        ids,
+        toDelete.map((r) => r.transcript_path)
+      );
       result.purged_snapshot_files = snapshots.files;
       result.purged_snapshot_bytes = snapshots.bytes;
     }

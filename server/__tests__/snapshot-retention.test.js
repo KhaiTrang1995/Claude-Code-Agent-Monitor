@@ -352,6 +352,38 @@ describe("purge and prune", () => {
     assert.ok(plan.over_cap_bytes > 0, "an unreachable cap is reported, not forced");
   });
 
+  it("attributes a Codex snapshot to its session via transcript_path, not its filename", () => {
+    // An imported rollout is snapshotted under its filename UUID while the
+    // session row can use session_meta.payload.id; transcript_path links them.
+    const codexDir = path.join(DATA_DIR, "codex-transcripts");
+    fs.mkdirSync(codexDir, { recursive: true });
+    const file = path.join(codexDir, "file-uuid-1111.jsonl");
+    fs.writeFileSync(file, userLines(5));
+    const old = new Date(Date.now() - 60 * DAY);
+    fs.utimesSync(file, old, old);
+    insertSession("meta-id-2222", { daysAgo: 60 });
+    db.prepare("UPDATE sessions SET transcript_path = ? WHERE id = ?").run(file, "meta-id-2222");
+
+    const orphans = retention.planSnapshotPrune(db, { orphans: true });
+    assert.ok(
+      !orphans.candidates.some((c) => c.fileSessionId === "file-uuid-1111"),
+      "a live session's snapshot is never an orphan"
+    );
+    const aged = retention.planSnapshotPrune(db, { maxAgeDays: 30 });
+    const hit = aged.candidates.find((c) => c.fileSessionId === "file-uuid-1111");
+    assert.ok(hit, "age cap sees it as the old session's snapshot");
+    assert.equal(hit.sessionId, "meta-id-2222");
+
+    const removed = retention.deleteSnapshotsForSessions(["meta-id-2222"], [file]);
+    assert.equal(removed.files, 1);
+    assert.equal(fs.existsSync(file), false, "purge removes it via transcript_path");
+    // A live provider path in transcript_path is never touched.
+    const live = path.join(PROJECT_DIR, "untouched.jsonl");
+    fs.writeFileSync(live, "x\n");
+    retention.deleteSnapshotsForSessions([], [live]);
+    assert.equal(fs.existsSync(live), true);
+  });
+
   it("deleteSnapshotsForSessions removes across all provider dirs", () => {
     const codexDir = path.join(DATA_DIR, "codex-transcripts");
     fs.mkdirSync(codexDir, { recursive: true });

@@ -233,18 +233,28 @@ function parseTime(value) {
   return Number.isFinite(ms) ? ms : null;
 }
 
+/**
+ * Session rows keyed by id, plus `pathOwner`: snapshot path → owning session
+ * id, from each row's `transcript_path`. A snapshot's filename normally IS its
+ * session id, but an imported Codex rollout is named from its filename UUID
+ * while its row may use `session_meta.payload.id`; the stored transcript_path
+ * (which points at the snapshot) is the authoritative link, so a snapshot is
+ * never mistaken for an orphan of a session that still exists.
+ */
 function loadSessionIndex(db) {
   const index = new Map();
+  const pathOwner = new Map();
   for (const row of db
-    .prepare("SELECT id, status, started_at, updated_at, ended_at FROM sessions")
+    .prepare("SELECT id, status, started_at, updated_at, ended_at, transcript_path FROM sessions")
     .iterate()) {
     const times = [row.started_at, row.updated_at, row.ended_at].map(parseTime).filter(Boolean);
     index.set(row.id, {
       status: row.status,
       lastActivityMs: times.length ? Math.max(...times) : null,
     });
+    if (row.transcript_path) pathOwner.set(path.resolve(row.transcript_path), row.id);
   }
-  return index;
+  return { index, pathOwner };
 }
 
 /**
@@ -259,8 +269,8 @@ function loadSessionIndex(db) {
  */
 function planSnapshotPrune(db, { maxAgeDays = null, maxBytes = null, orphans = false, now } = {}) {
   const nowMs = now ?? Date.now();
-  const sessions = loadSessionIndex(db);
-  const groups = new Map(); // `${kind}\0${sid}` → group
+  const { index: sessions, pathOwner } = loadSessionIndex(db);
+  const groups = new Map(); // `${kind}\0${fileSessionId}` → group
   let totalBytes = 0;
   for (const { kind, root } of getSnapshotRoots()) {
     for (const file of store.listSnapshotFiles(root)) {
@@ -269,9 +279,21 @@ function planSnapshotPrune(db, { maxAgeDays = null, maxBytes = null, orphans = f
       const key = `${kind}\0${file.sessionId}`;
       let group = groups.get(key);
       if (!group) {
-        group = { kind, root, sessionId: file.sessionId, bytes: 0, files: 0, newestMtimeMs: 0 };
+        // `fileSessionId` names the files on disk (what deletes and tombstones
+        // use); `sessionId` is the owning row, which may differ (see above).
+        group = {
+          kind,
+          root,
+          fileSessionId: file.sessionId,
+          sessionId: file.sessionId,
+          bytes: 0,
+          files: 0,
+          newestMtimeMs: 0,
+        };
         groups.set(key, group);
       }
+      const owner = pathOwner.get(path.resolve(store.logicalPath(file.path)));
+      if (owner) group.sessionId = owner;
       group.bytes += file.size;
       group.files++;
       group.newestMtimeMs = Math.max(group.newestMtimeMs, file.mtimeMs);
@@ -364,13 +386,13 @@ function pruneSnapshots(db, { dryRun = true, maxAgeDays, maxBytes, orphans = fal
   };
   if (dryRun) return response;
   for (const group of plan.candidates) {
-    const removed = store.deleteSessionSnapshots(group.root, group.sessionId);
+    const removed = store.deleteSessionSnapshots(group.root, group.fileSessionId);
     response.removed_files += removed.files;
     response.removed_bytes += removed.bytes;
     response.failed_files += removed.failed;
     if (group.reason !== "orphan") {
       try {
-        store.writeTombstone(group.root, group.sessionId);
+        store.writeTombstone(group.root, group.fileSessionId);
       } catch {
         /* without a tombstone a re-import may regrow it; the cap re-prunes */
       }
@@ -383,22 +405,37 @@ function pruneSnapshots(db, { dryRun = true, maxAgeDays, maxBytes, orphans = fal
 /**
  * Delete the snapshots of sessions whose database rows are being removed
  * (purge / remote-source purge). Their Conversation tab is unreachable without
- * the row, so the files are dead weight. Never throws.
+ * the row, so the files are dead weight. `transcriptPaths` (the rows' stored
+ * transcript_path) also catches a snapshot whose filename differs from its
+ * session id; paths outside the snapshot roots are ignored. Never throws.
  */
-function deleteSnapshotsForSessions(sessionIds) {
+function deleteSnapshotsForSessions(sessionIds, transcriptPaths = []) {
   const result = { files: 0, bytes: 0, failed: 0 };
-  if (!Array.isArray(sessionIds) || sessionIds.length === 0) return result;
   const roots = getSnapshotRoots();
-  for (const sessionId of sessionIds) {
-    for (const { root } of roots) {
-      try {
-        const removed = store.deleteSessionSnapshots(root, sessionId);
-        result.files += removed.files;
-        result.bytes += removed.bytes;
-        result.failed += removed.failed;
-      } catch {
-        result.failed++;
-      }
+  const targets = []; // [root, fileSessionId]
+  for (const sessionId of Array.isArray(sessionIds) ? sessionIds : []) {
+    for (const { root } of roots) targets.push([root, sessionId]);
+  }
+  for (const transcriptPath of Array.isArray(transcriptPaths) ? transcriptPaths : []) {
+    if (!transcriptPath) continue;
+    const resolved = path.resolve(transcriptPath);
+    const owning = roots.find(({ root }) => path.dirname(resolved) === path.resolve(root));
+    if (!owning) continue; // a live provider file, not a snapshot
+    const name = path.basename(store.logicalPath(resolved));
+    if (name.endsWith(".jsonl")) targets.push([owning.root, name.slice(0, -".jsonl".length)]);
+  }
+  const seen = new Set();
+  for (const [root, sessionId] of targets) {
+    const key = `${root}\0${sessionId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    try {
+      const removed = store.deleteSessionSnapshots(root, sessionId);
+      result.files += removed.files;
+      result.bytes += removed.bytes;
+      result.failed += removed.failed;
+    } catch {
+      result.failed++;
     }
   }
   if (result.files) invalidateSnapshotStorage();

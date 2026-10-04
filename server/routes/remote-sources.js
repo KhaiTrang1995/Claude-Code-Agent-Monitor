@@ -174,16 +174,18 @@ router.delete("/:id", (req, res) => {
   const purge = req.query.purge === "true" || req.query.purge === "1";
   let purged = 0;
   if (purge) {
-    const purgedIds = db
-      .prepare("SELECT id FROM sessions WHERE source = ?")
-      .all(req.params.id)
-      .map((row) => row.id);
+    const purgedRows = db
+      .prepare("SELECT id, transcript_path FROM sessions WHERE source = ?")
+      .all(req.params.id);
     // FK ON DELETE CASCADE removes the sessions' agents/events/token_usage too.
     const info = db.prepare("DELETE FROM sessions WHERE source = ?").run(req.params.id);
     purged = info.changes || 0;
     // Remote imports snapshot into the same dirs as local ones; without the
     // session rows those snapshots are unreachable, so reclaim them as well.
-    deleteSnapshotsForSessions(purgedIds);
+    deleteSnapshotsForSessions(
+      purgedRows.map((row) => row.id),
+      purgedRows.map((row) => row.transcript_path)
+    );
   } else {
     // Keep the imported rows but detach them from the (now gone) source id so
     // they fall back to the local view instead of a dangling filter value.
