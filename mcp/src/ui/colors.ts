@@ -307,40 +307,156 @@ function wrap(open: string, close: string): (text: string) => string {
 }
 
 // Modifiers
+/**
+ * Render text in bold or increased intensity (SGR 1, reset with SGR 22). Returns the text unchanged
+ * when colors are disabled.
+ */
 export const bold = wrap("1", "22");
+/**
+ * Render text in dim (faint) intensity (SGR 2, reset with SGR 22). Returns the text unchanged when
+ * colors are disabled.
+ */
 export const dim = wrap("2", "22");
+/**
+ * Render text in italic (SGR 3, reset with SGR 23). Returns the text unchanged when colors are
+ * disabled.
+ */
 export const italic = wrap("3", "23");
+/**
+ * Render text in underline (SGR 4, reset with SGR 24). Returns the text unchanged when colors are
+ * disabled.
+ */
 export const underline = wrap("4", "24");
+/**
+ * Render text in strikethrough (SGR 9, reset with SGR 29). Returns the text unchanged when colors
+ * are disabled.
+ */
 export const strikethrough = wrap("9", "29");
 
 // Foreground colors
+/**
+ * Render text in black (SGR 30, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const black = wrap("30", "39");
+/**
+ * Render text in red (SGR 31, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const red = wrap("31", "39");
+/**
+ * Render text in green (SGR 32, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const green = wrap("32", "39");
+/**
+ * Render text in yellow (SGR 33, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const yellow = wrap("33", "39");
+/**
+ * Render text in blue (SGR 34, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const blue = wrap("34", "39");
+/**
+ * Render text in magenta (SGR 35, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const magenta = wrap("35", "39");
+/**
+ * Render text in cyan (SGR 36, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const cyan = wrap("36", "39");
+/**
+ * Render text in white (SGR 37, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const white = wrap("37", "39");
+/**
+ * Render text in gray (SGR 90, reset to the default foreground with SGR 39). Returns the text
+ * unchanged when colors are disabled.
+ */
 export const gray = wrap("90", "39");
 
 // Bright foreground colors
+/**
+ * Render text in bright red (high-intensity SGR 91, reset to the default foreground with SGR 39).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const brightRed = wrap("91", "39");
+/**
+ * Render text in bright green (high-intensity SGR 92, reset to the default foreground with SGR 39).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const brightGreen = wrap("92", "39");
+/**
+ * Render text in bright yellow (high-intensity SGR 93, reset to the default foreground with SGR
+ * 39). Returns the text unchanged when colors are disabled.
+ */
 export const brightYellow = wrap("93", "39");
+/**
+ * Render text in bright blue (high-intensity SGR 94, reset to the default foreground with SGR 39).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const brightBlue = wrap("94", "39");
+/**
+ * Render text in bright magenta (high-intensity SGR 95, reset to the default foreground with SGR
+ * 39). Returns the text unchanged when colors are disabled.
+ */
 export const brightMagenta = wrap("95", "39");
+/**
+ * Render text in bright cyan (high-intensity SGR 96, reset to the default foreground with SGR 39).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const brightCyan = wrap("96", "39");
+/**
+ * Render text in bright white (high-intensity SGR 97, reset to the default foreground with SGR 39).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const brightWhite = wrap("97", "39");
 
 // Background colors
+/**
+ * Render text on a red background (SGR 41, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgRed = wrap("41", "49");
+/**
+ * Render text on a green background (SGR 42, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgGreen = wrap("42", "49");
+/**
+ * Render text on a yellow background (SGR 43, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgYellow = wrap("43", "49");
+/**
+ * Render text on a blue background (SGR 44, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgBlue = wrap("44", "49");
+/**
+ * Render text on a magenta background (SGR 45, reset to the default background with SGR 49).
+ * Returns the text unchanged when colors are disabled.
+ */
 export const bgMagenta = wrap("45", "49");
+/**
+ * Render text on a cyan background (SGR 46, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgCyan = wrap("46", "49");
+/**
+ * Render text on a white background (SGR 47, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgWhite = wrap("47", "49");
+/**
+ * Render text on a gray background (SGR 100, reset to the default background with SGR 49). Returns
+ * the text unchanged when colors are disabled.
+ */
 export const bgGray = wrap("100", "49");
 
 // 256-color support
@@ -372,10 +488,17 @@ export function stripAnsi(text: string): string {
 /** Semantic style aliases used throughout `ui/banner.ts`, `ui/formatter.ts`,
  * and `transports/repl.ts` so call sites express intent, not a specific color. */
 export const success = (t: string) => bold(green(t));
+/** Style for error messages: bold red. */
 export const error = (t: string) => bold(red(t));
+/** Style for warnings: bold yellow. */
 export const warn = (t: string) => bold(yellow(t));
+/** Style for informational notices: bold cyan. */
 export const info = (t: string) => bold(cyan(t));
+/** Style for secondary text such as hints, timestamps, and separators: dim gray. */
 export const muted = (t: string) => dim(gray(t));
+/** Style for emphasized values the user should notice: bold bright magenta. */
 export const highlight = (t: string) => bold(brightMagenta(t));
+/** Style for field labels in key/value output: bold bright white. */
 export const label = (t: string) => bold(brightWhite(t));
+/** Style for accents such as headings and prompts: bold bright cyan. */
 export const accent = (t: string) => bold(brightCyan(t));
