@@ -438,6 +438,10 @@ function useCountUp(end: number | null, durationMs = 1000) {
     let animationFrameId: number;
     const startValue = count;
 
+    /**
+     * One animation frame: move toward the target along an ease-out-quart curve and schedule the
+     * next frame until done.
+     */
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / durationMs, 1);
@@ -471,9 +475,13 @@ function Toggle({
   label,
   description,
 }: {
+  /** Whether the switch is on. */
   checked: boolean;
+  /** Called with the new state. */
   onChange: (v: boolean) => void;
+  /** Label shown beside the switch. */
   label: string;
+  /** Optional helper text under the label. */
   description?: string;
 }) {
   return (
@@ -523,6 +531,10 @@ function PricingInfoTooltip({ provider = "claude" }: { provider?: "claude" | "cu
         ? "pricing.cursor.tooltip"
         : "pricing.tooltip";
 
+  /**
+   * Place the popover below the info button, or above it when there is no room, clamped inside the
+   * viewport.
+   */
   const positionPopover = useCallback(() => {
     const btn = buttonRef.current;
     const pop = popoverRef.current;
@@ -659,9 +671,13 @@ function GptPricingTable({
   resetLoading,
   onReset,
 }: {
+  /** Increments when pricing is reset elsewhere, which makes the table reload. */
   resetRevision: number;
+  /** Whether the reset button is waiting for its confirming click. */
   resetConfirming: boolean;
+  /** True while the reset is in flight. */
   resetLoading: boolean;
+  /** Resets the GPT pricing table to its defaults (two clicks). */
   onReset: () => void;
 }) {
   const { t } = useTranslation("settings");
@@ -672,6 +688,10 @@ function GptPricingTable({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addRowRef = useRef<HTMLTableRowElement>(null);
+  /**
+   * Reload the GPT rules. Servers that predate the GPT endpoints are tolerated, so the rest of
+   * Settings keeps working during a rolling upgrade.
+   */
   const reload = useCallback(() => {
     // Older embedded/test API facades can predate the Codex endpoint. Keep the
     // rest of Settings usable during a rolling upgrade; production API always
@@ -697,6 +717,7 @@ function GptPricingTable({
     return () => cancelAnimationFrame(frame);
   }, [adding]);
 
+  /** Start editing a GPT rule, copying its values into the draft. */
   const edit = (rule: GptModelPricing) => {
     const next = emptyGptDraft();
     next.model_pattern = rule.model_pattern;
@@ -707,11 +728,16 @@ function GptPricingTable({
     setAdding(false);
     setError(null);
   };
+  /** Leave edit or add mode and clear the error. */
   const cancel = () => {
     setEditing(null);
     setAdding(false);
     setError(null);
   };
+  /**
+   * Save the draft as a new or updated GPT rule. Requires a model pattern and display name; rates
+   * that are negative or not numbers are saved as 0.
+   */
   const save = async () => {
     if (!draft.model_pattern.trim() || !draft.display_name.trim()) {
       setError(t("pricing.validationRequired"));
@@ -735,6 +761,7 @@ function GptPricingTable({
       setBusy(false);
     }
   };
+  /** Delete a GPT rule after a browser confirmation, then reload. */
   const remove = async (pattern: string) => {
     if (!window.confirm(t("pricing.gpt.deleteConfirm"))) return;
     try {
@@ -744,6 +771,7 @@ function GptPricingTable({
       setError(err instanceof Error ? err.message : t("messages.failedDelete"));
     }
   };
+  /** Render the input for one draft field; rate fields get a `$` prefix. */
   const input = (field: keyof GptDraft, className = "") => {
     const isRate = field.endsWith("_mtok");
     return (
@@ -984,9 +1012,13 @@ function CursorPricingTable({
   resetLoading,
   onReset,
 }: {
+  /** Increments when pricing is reset elsewhere, which makes the table reload. */
   resetRevision: number;
+  /** Whether the reset button is waiting for its confirming click. */
   resetConfirming: boolean;
+  /** True while the reset is in flight. */
   resetLoading: boolean;
+  /** Resets the Cursor pricing table to its defaults (two clicks). */
   onReset: () => void;
 }) {
   const { t } = useTranslation("settings");
@@ -996,6 +1028,7 @@ function CursorPricingTable({
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Reload the Cursor rules. */
   const reload = useCallback(
     () => api.pricing.listCursor().then((result) => setRules(result.pricing)),
     []
@@ -1007,11 +1040,13 @@ function CursorPricingTable({
     );
   }, [reload, resetRevision, t]);
 
+  /** Leave edit or add mode and clear the error. */
   const cancel = () => {
     setEditing(null);
     setAdding(false);
     setError(null);
   };
+  /** Start editing a Cursor rule, copying its values into the draft. */
   const edit = (rule: CursorModelPricing) => {
     const next = emptyCursorDraft();
     next.model_pattern = rule.model_pattern;
@@ -1022,6 +1057,10 @@ function CursorPricingTable({
     setAdding(false);
     setError(null);
   };
+  /**
+   * Save the draft as a new or updated Cursor rule. Requires a model pattern and display name;
+   * rates that are negative or not numbers are saved as 0.
+   */
   const save = async () => {
     if (!draft.model_pattern.trim() || !draft.display_name.trim()) {
       setError(t("pricing.validationRequired"));
@@ -1045,6 +1084,7 @@ function CursorPricingTable({
       setBusy(false);
     }
   };
+  /** Delete a Cursor rule after a browser confirmation, then reload. */
   const remove = async (pattern: string) => {
     if (!window.confirm(t("pricing.cursor.deleteConfirm"))) return;
     try {
@@ -1054,6 +1094,7 @@ function CursorPricingTable({
       setError(err instanceof Error ? err.message : t("messages.failedDelete"));
     }
   };
+  /** Render the input for one draft field; rate fields get a `$` prefix. */
   const input = (field: keyof CursorDraft) => {
     const isRate = field.endsWith("_mtok");
     return (
@@ -1075,6 +1116,7 @@ function CursorPricingTable({
       </div>
     );
   };
+  /** Table cells for the row being added or edited. */
   const editCells = () => (
     <>
       <td className="px-2 py-2">{input("model_pattern")}</td>
@@ -1218,9 +1260,15 @@ function HookInstallModal({
   onClose,
   onInstalled,
 }: {
+  /** Whether the modal is shown. */
   open: boolean;
+  /**
+   * Current hook status, used to label already-installed providers and warn about existing hooks.
+   */
   status?: SystemInfo["hooks"];
+  /** Closes the modal. */
   onClose: () => void;
+  /** Called after a successful install, to refresh the status. */
   onInstalled: () => void;
 }) {
   const { t } = useTranslation("settings");
@@ -1237,6 +1285,7 @@ function HookInstallModal({
   }, [open]);
 
   if (!open) return null;
+  /** Add or remove a provider from the install selection. */
   const toggle = (provider: "claude" | "codex") => {
     setSelected((current) =>
       current.includes(provider)
@@ -1244,9 +1293,15 @@ function HookInstallModal({
         : [...current, provider]
     );
   };
+  /** Whether the dashboard's hooks are already fully installed for a provider. */
   const installed = (provider: "claude" | "codex") => status?.providers?.[provider]?.installed;
+  /**
+   * Whether a provider's config already has hooks, ours or another tool's, so the modal can say
+   * they will be preserved.
+   */
   const hasExistingHooks = (provider: "claude" | "codex") =>
     status?.providers?.[provider]?.has_existing_hooks || installed(provider);
+  /** Install hooks for the selected providers and show the installer output, or the failure. */
   const install = async () => {
     if (selected.length === 0) return;
     setBusy(true);
@@ -1419,6 +1474,7 @@ export function Settings() {
   const [pricingResetRevision, setPricingResetRevision] = useState(0);
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>(loadNotifPrefs);
   const [tabbyEnabled, setTabbyEnabled] = useState(() => tabbyPrefs.getEnabled());
+  /** Show or hide Tabby, persisting the choice. */
   const setTabby = useCallback((v: boolean) => {
     tabbyPrefs.setEnabled(v);
     setTabbyEnabled(v);
@@ -1534,10 +1590,15 @@ export function Settings() {
     active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [activeSection]);
 
+  /** Scroll the table of contents horizontally by `delta` pixels. */
   const scrollTocBy = useCallback((delta: number) => {
     tocRef.current?.scrollBy({ left: delta, behavior: "smooth" });
   }, []);
 
+  /**
+   * Load everything the page needs in parallel: Claude pricing, total cost, system info, and the
+   * Claude and Codex home directories.
+   */
   const load = useCallback(async () => {
     try {
       const [pricingRes, costRes, infoRes, claudeHomeRes, codexHomeRes] = await Promise.all([
@@ -1571,6 +1632,7 @@ export function Settings() {
   }, [load]);
 
   useEffect(() => {
+    /** Refresh system info only, used by the periodic poll. */
     const refreshInfo = () =>
       api.settings
         .info()
@@ -1609,6 +1671,7 @@ export function Settings() {
     return () => clearTimeout(timeout);
   }, [actionResult]);
 
+  /** Apply a change to the notification preferences and persist it. */
   const updateNotifPrefs = (patch: Partial<NotifPrefs>) => {
     setNotifPrefs((prev) => {
       const next = { ...prev, ...patch };
@@ -1617,6 +1680,10 @@ export function Settings() {
     });
   };
 
+  /**
+   * Ask the browser for notification permission; when granted, enable notifications and subscribe
+   * to push.
+   */
   const requestNotifPermission = async () => {
     if (!("Notification" in window)) return;
     const perm = await Notification.requestPermission();
@@ -1626,6 +1693,7 @@ export function Settings() {
     }
   };
 
+  /** Start editing a Claude pricing rule, copying its values into the form. */
   const startEdit = (rule: ModelPricing) => {
     setAdding(false);
     setEditingPattern(rule.model_pattern);
@@ -1648,18 +1716,25 @@ export function Settings() {
     });
   };
 
+  /** Start adding a Claude pricing rule from a blank form. */
   const startAdd = () => {
     setEditingPattern(null);
     setAdding(true);
     setEditRow({ ...emptyRow });
   };
 
+  /** Leave edit or add mode and clear the error. */
   const cancelEdit = () => {
     setEditingPattern(null);
     setAdding(false);
     setError(null);
   };
 
+  /**
+   * Save the Claude pricing form. Requires a pattern and display name, and an intro end date in
+   * `YYYY-MM-DD` form when one is given. The intro block is always sent, so clearing the date
+   * removes the promo.
+   */
   const saveEdit = async () => {
     if (!editRow.model_pattern.trim() || !editRow.display_name.trim()) {
       setError(t("pricing.validationRequired"));
@@ -1702,6 +1777,7 @@ export function Settings() {
     }
   };
 
+  /** Delete a Claude pricing rule, then reload. */
   const deleteRule = async (pattern: string) => {
     try {
       await api.pricing.delete(pattern);
@@ -1711,6 +1787,10 @@ export function Settings() {
     }
   };
 
+  /**
+   * Run a Settings action with a loading state, clearing any pending confirmation and showing the
+   * result or error in that section's banner.
+   */
   const runAction = async (key: string, fn: () => Promise<string>) => {
     setActionLoading(key);
     setActionResult(null);
@@ -1732,6 +1812,7 @@ export function Settings() {
     }
   };
 
+  /** Delete all stored session data and report how many rows were removed. */
   const handleClearData = () =>
     runAction("clear", async () => {
       const res = await api.settings.clearData();
@@ -1739,6 +1820,10 @@ export function Settings() {
       return t("danger.clearedResult", { count: total });
     });
 
+  /**
+   * Reset one provider's pricing table to its defaults, bump the reset revision so the tables
+   * reload, and report how many rules it now has.
+   */
   const handleResetPricing = (
     actionKey = "reset-pricing",
     provider: "claude" | "cursor" | "codex" = "claude"
@@ -1755,6 +1840,11 @@ export function Settings() {
       return t("pricing.resetResult", { count });
     });
 
+  /**
+   * Run cleanup with the entered thresholds: mark idle sessions abandoned after the given hours and
+   * purge sessions older than the given days, then report what was abandoned, purged, and how much
+   * snapshot space was freed.
+   */
   const handleCleanup = () =>
     runAction("cleanup", async () => {
       const params: { abandon_hours?: number; purge_days?: number } = {};
@@ -1776,6 +1866,10 @@ export function Settings() {
       return parts.length > 0 ? parts.join(". ") : t("data.nothingToClean");
     });
 
+  /**
+   * Save the Claude home directory override; the server applies it without a restart and returns
+   * the resolved path.
+   */
   const handleSaveClaudeHome = async () => {
     if (claudeHomeInput === claudeHome) return;
     setClaudeHomeSaving(true);
@@ -1791,6 +1885,10 @@ export function Settings() {
     }
   };
 
+  /**
+   * Save the Codex home directory override; the server applies it without a restart, re-arms
+   * rollout watching, and returns the resolved path.
+   */
   const handleSaveCodexHome = async () => {
     if (codexHomeInput === codexHome) return;
     setCodexHomeSaving(true);
@@ -1820,6 +1918,7 @@ export function Settings() {
 
   const isEditing = editingPattern !== null || adding;
 
+  /** Table cells for the Claude pricing row being added or edited. */
   const renderEditCells = () => (
     <>
       <td className="px-4 py-3">
@@ -1952,6 +2051,7 @@ export function Settings() {
     </label>
   );
 
+  /** Extra row under the edited Claude rule for its introductory rates and end date. */
   const renderIntroEditRow = () => (
     <tr className="bg-surface-3">
       <td colSpan={10} className="px-4 pb-3 pt-2">
@@ -1975,6 +2075,10 @@ export function Settings() {
     </tr>
   );
 
+  /**
+   * Result banner for the action keys given, or null when the latest result belongs to another
+   * section.
+   */
   const actionBanner = (keys: string[]) => {
     const match = actionResult && keys.includes(actionResult.key) ? actionResult : null;
     if (!match) return null;
