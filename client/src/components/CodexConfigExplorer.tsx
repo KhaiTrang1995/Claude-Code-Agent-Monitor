@@ -173,6 +173,7 @@ export function CodexConfigExplorer() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  /** Reload the Codex overview, showing a loading state and replacing any previous error. */
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -200,6 +201,7 @@ export function CodexConfigExplorer() {
     [refresh]
   );
 
+  /** Open a file in the redacted preview, remembering whether it may be edited or deleted. */
   const openFile = useCallback(async (file: string, editable = false, deletable = false) => {
     setViewer(null);
     setViewerError(null);
@@ -210,6 +212,10 @@ export function CodexConfigExplorer() {
     }
   }, []);
 
+  /**
+   * Open the editor for an allowlisted file, fetching its full unredacted contents. While loading,
+   * the file's Edit button shows a spinner.
+   */
   const openEditor = useCallback(async (file: string) => {
     setEditor(null);
     setEditorError(null);
@@ -223,6 +229,9 @@ export function CodexConfigExplorer() {
     }
   }, []);
 
+  /**
+   * Save the editor contents. On success, close the editor, show a notice, and reload the overview.
+   */
   const saveEditor = useCallback(async () => {
     if (!editor || saving) return;
     setSaving(true);
@@ -243,6 +252,10 @@ export function CodexConfigExplorer() {
     }
   }, [editor, refresh, saving, t]);
 
+  /**
+   * Create a `--profile` overlay after checking the name locally (letters, numbers, hyphens,
+   * underscores), then show a notice and reload the overview.
+   */
   const createProfile = useCallback(async () => {
     const name = profileName.trim();
     if (!/^[A-Za-z0-9_-]+$/.test(name)) {
@@ -276,11 +289,13 @@ export function CodexConfigExplorer() {
     }
   }, [profileName, refresh, t]);
 
+  /** Ask for confirmation before deleting a file. */
   const requestDelete = useCallback((path: string, label: string) => {
     setDeleteError(null);
     setDeleteTarget({ path, label });
   }, []);
 
+  /** Delete the confirmed file, then show a notice and reload the overview. */
   const deleteFile = useCallback(async () => {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
@@ -306,6 +321,7 @@ export function CodexConfigExplorer() {
   }, [deleteTarget, deleting, refresh, t]);
 
   const counts = data?.counts || {};
+  /** Summary tiles for the overview, paired with their counts. */
   const overviewCards = useMemo<Array<[SummaryTab, number | undefined]>>(
     () => [
       ["models", counts.models],
@@ -461,15 +477,20 @@ function CodexTabs({
   counts,
   t,
 }: {
+  /** Selected tab. */
   current: Tab;
+  /** Called with the tab the user picks. */
   onSelect: (tab: Tab) => void;
+  /** Item count per section, shown as badges. */
   counts: Record<string, number>;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  /** Show the scroll arrows only when tabs are hidden on that side. */
   const updateAffordances = useCallback(() => {
     const element = scrollRef.current;
     if (!element) return;
@@ -503,6 +524,7 @@ function CodexTabs({
     }
   }, [current]);
 
+  /** Scroll the tab bar by most of its visible width, at least 200px. */
   const move = (direction: 1 | -1) => {
     const element = scrollRef.current;
     if (!element) return;
@@ -593,15 +615,25 @@ function CodexTab({
   onCreateProfile,
   t,
 }: {
+  /** Codex overview data. */
   data: CodexConfigOverview;
+  /** Tab to render. */
   tab: Tab;
+  /** Overview summary tiles with their counts. */
   cards: Array<[SummaryTab, number | undefined]>;
+  /** Switches tab, used by the overview tiles. */
   onTab: (tab: Tab) => void;
+  /** Opens a file in the preview, with its allowed actions. */
   onOpenFile: (path: string, editable?: boolean, deletable?: boolean) => void;
+  /** Opens a file in the editor. */
   onEditFile: (path: string) => void;
+  /** Asks to delete a file, given its path and display label. */
   onDeleteFile: (path: string, label: string) => void;
+  /** Path of the file whose editor is loading, or null. */
   openingEditor: string | null;
+  /** Opens the create-profile dialog. */
   onCreateProfile: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   if (tab === "overview") {
@@ -1117,9 +1149,13 @@ function CodexDefaultStat({
   label,
   value,
 }: {
+  /** Icon shown in the tile. */
   icon: typeof Box;
+  /** Color tone. */
   tone: CodexTone;
+  /** Setting name. */
   label: string;
+  /** Configured value, or null when unset. */
   value: string | null;
 }) {
   const palette = CODEX_TONES[tone];
@@ -1156,10 +1192,15 @@ function CodexSummaryStat({
   value,
   onClick,
 }: {
+  /** Icon shown in the tile. */
   icon: typeof Box;
+  /** Color tone. */
   tone: CodexTone;
+  /** Section name. */
   label: string;
+  /** Number of items in the section. */
   value: number;
+  /** Opens the section's tab. */
   onClick: () => void;
 }) {
   const palette = CODEX_TONES[tone];
@@ -1199,13 +1240,21 @@ function Rows({
   openingEditor,
   t,
 }: {
+  /** Items to list, each with a label, path, and preview. */
   rows: Array<{ label: string; path: string; preview: string }>;
+  /** Whether these files may be edited. */
   editable?: boolean;
+  /** Whether these files may be deleted. */
   deletable?: boolean;
+  /** Opens a file in the preview. */
   onOpenFile: (path: string, editable?: boolean, deletable?: boolean) => void;
+  /** Opens a file in the editor. */
   onEditFile: (path: string) => void;
+  /** Asks to delete a file. */
   onDeleteFile: (path: string, label: string) => void;
+  /** Path of the file whose editor is loading, or null. */
   openingEditor: string | null;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   if (!rows.length) return <EmptyState t={t} />;
@@ -1241,15 +1290,25 @@ function FileRow({
   openingEditor,
   t,
 }: {
+  /** Display name. */
   label: string;
+  /** Absolute file path. */
   path: string;
+  /** Short excerpt of the file. */
   preview: string;
+  /** Whether the file may be edited. */
   editable?: boolean;
+  /** Whether the file may be deleted. */
   deletable?: boolean;
+  /** Opens the file in the preview. */
   onOpenFile: (path: string, editable?: boolean, deletable?: boolean) => void;
+  /** Opens the file in the editor. */
   onEditFile: (path: string) => void;
+  /** Asks to delete the file. */
   onDeleteFile: (path: string, label: string) => void;
+  /** Whether this file's editor is loading. */
   openingEditor: boolean;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   return (
@@ -1293,17 +1352,26 @@ function FileActions({
   onDelete,
   t,
 }: {
+  /** File the actions apply to. */
   path: string;
+  /** Show the Edit button. */
   editable: boolean;
+  /** Show the Delete button. */
   deletable: boolean;
+  /** Show a spinner on Edit while the editor loads. */
   openingEditor: boolean;
+  /** Opens the preview. */
   onView: () => void;
+  /** Opens the editor. */
   onEdit: () => void;
+  /** Asks to delete the file. */
   onDelete: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   const [copied, setCopied] = useState(false);
 
+  /** Copy the path and show a check mark for 1.5 seconds. */
   const copyPath = async () => {
     if (await copyText(path)) {
       setCopied(true);
@@ -1386,6 +1454,7 @@ function ProfileLaunchCommand({ name, t }: { name: string; t: TFunction }) {
   const command = `codex --profile ${name}`;
   const [copied, setCopied] = useState(false);
 
+  /** Copy the command and show a check mark for 1.5 seconds. */
   const copyCommand = async () => {
     if (await copyText(command)) {
       setCopied(true);
@@ -1455,12 +1524,19 @@ function CreateProfileModal({
   onCreate,
   t,
 }: {
+  /** Profile name as typed. */
   name: string;
+  /** Validation or server error to show, or null. */
   error: string | null;
+  /** True while the create request is in flight. */
   creating: boolean;
+  /** Called as the name is edited. */
   onChange: (value: string) => void;
+  /** Closes the dialog. */
   onClose: () => void;
+  /** Creates the profile. */
   onCreate: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   return (
@@ -1551,14 +1627,21 @@ function DeleteFileModal({
   onDelete,
   t,
 }: {
+  /** File awaiting deletion. */
   target: DeleteTarget;
+  /** Delete error to show, or null. */
   error: string | null;
+  /** True while the delete request is in flight; closing is blocked meanwhile. */
   deleting: boolean;
+  /** Closes the dialog. */
   onClose: () => void;
+  /** Deletes the file. */
   onDelete: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   useEffect(() => {
+    /** Close on Escape unless a delete is in flight. */
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !deleting) onClose();
     };
@@ -1642,11 +1725,17 @@ function PreviewModal({
   onDelete,
   t,
 }: {
+  /** File to preview, or null while it loads. */
   state: PreviewState | null;
+  /** Load error to show, or null. */
   error: string | null;
+  /** Closes the preview. */
   onClose: () => void;
+  /** Opens the editor; omitted when the file is not editable. */
   onEdit?: () => void;
+  /** Asks to delete the file; omitted when the file is not deletable. */
   onDelete?: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   return (
@@ -1720,12 +1809,19 @@ function EditorModal({
   onSave,
   t,
 }: {
+  /** File being edited, or null while it loads. */
   state: CodexConfigEditableFile | null;
+  /** Save error to show, or null. */
   error: string | null;
+  /** True while the save is in flight. */
   saving: boolean;
+  /** Called as the text is edited. */
   onChange: (text: string) => void;
+  /** Closes the editor without saving. */
   onClose: () => void;
+  /** Saves the file. */
   onSave: () => void;
+  /** Translation function for the `ccConfig` namespace, passed down from the explorer. */
   t: TFunction;
 }) {
   return (
@@ -1805,8 +1901,11 @@ function StatusNotice({
   message,
   onDismiss,
 }: {
+  /** Banner style. */
   kind: "error" | "success";
+  /** Message to show. */
   message: string;
+  /** Hides the banner. */
   onDismiss: () => void;
 }) {
   const success = kind === "success";
