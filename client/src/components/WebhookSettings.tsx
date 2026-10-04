@@ -98,7 +98,10 @@ import type {
   WebhookTestResult,
 } from "../lib/types";
 
-// Brand-ish accent per provider type; anything unmapped falls back to neutral.
+/**
+ * Brand-like accent per provider type for the target badges; unmapped providers fall back to {@link
+ * NEUTRAL_STYLE}.
+ */
 const TYPE_STYLES: Partial<Record<WebhookType, string>> = {
   slack: "text-[#E01E5A] bg-[#E01E5A]/10 border-[#E01E5A]/20",
   discord: "text-[#5865F2] bg-[#5865F2]/10 border-[#5865F2]/20",
@@ -111,27 +114,58 @@ const TYPE_STYLES: Partial<Record<WebhookType, string>> = {
   opsgenie: "text-[#2684FF] bg-[#2684FF]/10 border-[#2684FF]/20",
   splunk_oncall: "text-[#F99D1C] bg-[#F99D1C]/10 border-[#F99D1C]/20",
 };
+/** Badge classes for providers without a brand accent. */
 const NEUTRAL_STYLE = "text-gray-300 bg-surface-2 border-border";
 
+/** One editable custom HTTP header row in the form. */
 interface HeaderRow {
+  /** Header name. */
   key: string;
+  /** Header value. */
   value: string;
 }
 
+/** State of the add/edit webhook form. */
 interface FormState {
+  /** Id of the target being edited, or null when adding. */
   id: string | null;
+  /** Display name of the target. */
   name: string;
+  /** Provider type; decides which fields the form shows. */
   type: WebhookType;
+  /**
+   * Destination URL. Blank when editing, which keeps the stored URL; the API only ever returns a
+   * masked preview of it.
+   */
   url: string;
+  /** Signing secret for generic providers. Blank keeps the stored secret. */
   secret: string;
+  /** Custom headers for providers that support them. */
   headerRows: HeaderRow[];
+  /**
+   * When editing, whether to replace the stored headers with `headerRows`. Off by default so saving
+   * without touching headers keeps them.
+   */
   replaceHeaders: boolean;
+  /**
+   * Provider-specific settings (for example region, chat id, or severity). Secret fields start
+   * blank when editing and are only sent when re-entered.
+   */
   config: Record<string, string>;
+  /** When true the target receives alerts from every rule; otherwise only from `ruleIds`. */
   scopeAll: boolean;
+  /** Alert rules the target is limited to when `scopeAll` is false. */
   ruleIds: string[];
+  /** Whether the target receives alerts. */
   enabled: boolean;
 }
 
+/**
+ * Default values for a provider's config fields.
+ *
+ * @param provider - Provider definition, or undefined.
+ * @returns Field defaults keyed by field name.
+ */
 function defaultsFor(provider: WebhookProvider | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   if (!provider) return out;
@@ -139,6 +173,7 @@ function defaultsFor(provider: WebhookProvider | undefined): Record<string, stri
   return out;
 }
 
+/** Small on/off switch with an optional label, exposed as `role="switch"`. */
 function Toggle({
   checked,
   onChange,
@@ -167,6 +202,13 @@ function Toggle({
   );
 }
 
+/**
+ * Webhook targets section (the Channels tab of Alerts). Lists configured targets with their
+ * provider, enabled state, and rule scope. It can add, edit, test, enable or disable, and delete
+ * them; the form adapts to each provider's fields. Secrets and URLs are never sent back to the
+ * browser: editing leaves them blank, and they are only updated when re-entered. Hosted providers
+ * require HTTPS.
+ */
 export function WebhookSettings() {
   const { t } = useTranslation("settings");
   const [targets, setTargets] = useState<WebhookTarget[]>([]);
