@@ -101,15 +101,23 @@ export function printBanner(): void {
  * `policy/tool-guards.ts` flags, warning-colored when enabled. Ends with a
  * reminder that the dashboard must already be running at the printed URL. */
 export function printServerInfo(info: {
+  /** Transport description, for example `http (sse + streamable)`. */
   transport: string;
+  /** MCP server version. */
   version: string;
+  /** Dashboard base URL the tools call. */
   dashboard: string;
+  /** Listening port, for the HTTP transport. */
   port?: number;
+  /** Whether tools that change dashboard data are enabled (`allowMutations`). */
   mutations: boolean;
+  /** Whether destructive tools are enabled (`MCP_DASHBOARD_ALLOW_DESTRUCTIVE`, off by default). */
   destructive: boolean;
+  /** Number of registered tools. */
   tools: number;
 }): void {
   const divider = c.dim(c.cyan("─".repeat(62)));
+  /** Format one label/value line of the startup panel. */
   const line = (label: string, value: string) =>
     `  ${c.dim(c.cyan("│"))} ${c.label(label.padEnd(18))} ${value}`;
 

@@ -112,8 +112,13 @@ interface PaletteActionContextValue {
   run: (id: string) => boolean;
 }
 
+/** Unregister function returned by the default context, used outside a provider. */
 const noopUnregister = () => {};
 
+/**
+ * Context for page-registered palette actions. The default value lets components render outside the
+ * provider without crashing: nothing is bound and nothing runs.
+ */
 const PaletteActionContext = createContext<PaletteActionContextValue>({
   boundIds: new Set(),
   register: () => noopUnregister,
@@ -160,10 +165,15 @@ export function PaletteActionProvider({ children }: { children: ReactNode }) {
   const [boundIds, setBoundIds] = useState<ReadonlySet<string>>(() => new Set());
   const handlersRef = useRef<Map<string, PaletteActionHandler[]>>(new Map());
 
+  /** Publish the set of ids that currently have a handler. */
   const syncBoundIds = useCallback(() => {
     setBoundIds(new Set(handlersRef.current.keys()));
   }, []);
 
+  /**
+   * Register a handler for an id, stacking it above earlier ones. Returns a function that removes
+   * exactly this handler.
+   */
   const register = useCallback(
     (id: string, handler: PaletteActionHandler) => {
       const stack = handlersRef.current.get(id) ?? [];
@@ -182,6 +192,11 @@ export function PaletteActionProvider({ children }: { children: ReactNode }) {
     [syncBoundIds]
   );
 
+  /**
+   * Run the newest handler for an id. If it returns `false` (declined), try the one below it.
+   *
+   * @returns True when a handler ran.
+   */
   const run = useCallback((id: string): boolean => {
     const stack = handlersRef.current.get(id);
     if (!stack || stack.length === 0) return false;
@@ -191,6 +206,7 @@ export function PaletteActionProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
 
+  /** Context value, memoized so consumers only re-render when the bound ids change. */
   const value = useMemo<PaletteActionContextValue>(
     () => ({ boundIds, register, run }),
     [boundIds, register, run]

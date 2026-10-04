@@ -88,6 +88,7 @@ import { z } from "zod";
 import type { Logger } from "./logger.js";
 import { errorResult, jsonResult } from "./tool-result.js";
 
+/** Tool input as passed to handlers: a plain object, validated by each tool's own schema. */
 type GenericInput = Record<string, unknown>;
 
 /** Signature every domain tool handler implements. Receives the
@@ -117,8 +118,11 @@ export interface ToolRegistrar {
  * Consumed by `transports/tool-collector.ts`/`transports/repl.ts` to invoke
  * tools directly, bypassing the MCP protocol. */
 export interface ToolEntry {
+  /** Tool name. */
   name: string;
+  /** Tool description. */
   description: string;
+  /** Function that runs the tool. */
   handler: ToolHandler;
 }
 
@@ -190,8 +194,11 @@ export function createCollectorRegistrar(collector: ToolEntry[]): ToolRegistrar 
  * decision here lets every domain declaration run unchanged in both surfaces.
  */
 export function registrarFor(context: {
+  /** MCP server to register tools on, for the server transports. */
   server?: McpServer;
+  /** Custom registrar used instead of a server, for example by the REPL's tool collector. */
   register?: ToolRegistrar;
+  /** Logger for registration messages. */
   logger: Logger;
 }): ToolRegistrar {
   if (context.register) return context.register;

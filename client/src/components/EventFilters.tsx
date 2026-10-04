@@ -288,6 +288,7 @@ export function EventFilters({
     };
   }, []);
 
+  /** Toggle one value of a multi-select filter. */
   const toggle = (field: keyof EventFiltersValue, item: string) => {
     const current = value[field];
     if (!Array.isArray(current)) return;
@@ -399,10 +400,15 @@ function ChipGroup({
   onToggle,
   labels,
 }: {
+  /** Group label. */
   label: string;
+  /** Values offered. */
   options: string[];
+  /** Values currently selected. */
   selected: string[];
+  /** Called with the clicked value. */
   onToggle: (item: string) => void;
+  /** Display names for values, keyed by raw value. */
   labels?: Record<string, string>;
 }) {
   const { t } = useTranslation("common");
@@ -412,6 +418,7 @@ function ChipGroup({
   // Click-outside dismiss.
   useEffect(() => {
     if (!open) return;
+    /** Close the dropdown on a click outside it. */
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
