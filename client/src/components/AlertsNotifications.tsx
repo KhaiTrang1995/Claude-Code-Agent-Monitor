@@ -290,6 +290,7 @@ export function AlertsNotifications() {
   const [unackedOnly, setUnackedOnly] = useState(false);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
 
+  /** Load the alert rules. */
   const loadRules = useCallback(async () => {
     setLoadingRules(true);
     try {
@@ -302,6 +303,7 @@ export function AlertsNotifications() {
     }
   }, []);
 
+  /** Load the first page of fired alerts, unacknowledged only when that filter is on. */
   const loadAlerts = useCallback(async () => {
     setLoadingAlerts(true);
     try {
@@ -320,6 +322,7 @@ export function AlertsNotifications() {
     }
   }, [unackedOnly]);
 
+  /** Append the next page of fired alerts. */
   const loadMore = useCallback(async () => {
     try {
       const res = await api.alerts.list({
@@ -353,8 +356,10 @@ export function AlertsNotifications() {
     });
   }, [loadAlerts]);
 
+  /** Merge a change into the rule form. */
   const set = (patch: Partial<RuleFormState>) => setForm((prev) => ({ ...prev, ...patch }));
 
+  /** Create a rule from the form; a missing or negative cooldown falls back to 300 seconds. */
   const onCreateRule = async () => {
     if (saving) return;
     setSaving(true);
@@ -377,6 +382,7 @@ export function AlertsNotifications() {
     }
   };
 
+  /** Enable or disable a rule, then reload the rules. */
   const onToggleRule = async (rule: AlertRule) => {
     try {
       await api.alerts.rules.update(rule.id, { enabled: !rule.enabled });
@@ -386,6 +392,7 @@ export function AlertsNotifications() {
     }
   };
 
+  /** Delete a rule, then reload the rules and the feed. */
   const onDeleteRule = async (rule: AlertRule) => {
     try {
       await api.alerts.rules.remove(rule.id);
@@ -397,6 +404,7 @@ export function AlertsNotifications() {
     }
   };
 
+  /** Acknowledge one alert, then reload the feed. */
   const onAck = async (id: number) => {
     try {
       await api.alerts.ack(id);
@@ -406,6 +414,7 @@ export function AlertsNotifications() {
     }
   };
 
+  /** Acknowledge every alert, then reload the feed. */
   const onAckAll = async () => {
     try {
       await api.alerts.ackAll();

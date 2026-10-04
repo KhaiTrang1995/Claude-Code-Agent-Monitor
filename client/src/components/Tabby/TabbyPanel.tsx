@@ -107,6 +107,10 @@ export function TabbyPanel({
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
 
+  /**
+   * Submit a question: show the inline answer, or nothing when it was handed off to the Run page
+   * (the container then navigates and closes the panel).
+   */
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const result = onAsk(query);
@@ -267,9 +271,13 @@ function StatChip({
   value,
   tone,
 }: {
+  /** Icon component. */
   icon: LucideIcon;
+  /** Short label. */
   label: string;
+  /** Count to show. */
   value: number;
+  /** Tone name; `muted` for zero counts. */
   tone: string;
 }): ReactNode {
   const t = TONES[tone] ?? TONE_MUTED;
@@ -291,9 +299,13 @@ function ActionButton({
   onClick,
   disabled,
 }: {
+  /** Icon component. */
   icon: LucideIcon;
+  /** Button label. */
   label: string;
+  /** Called on click. */
   onClick: () => void;
+  /** Disables the button. */
   disabled?: boolean;
 }) {
   return (

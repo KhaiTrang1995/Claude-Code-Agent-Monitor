@@ -87,14 +87,32 @@ import type { DiffHunk, GrepMatch } from "./primitives";
 
 // ───────────────────────── Helpers ─────────────────────────
 
+/**
+ * Value as a string, or an empty string when it is not one.
+ *
+ * @param v - Any value.
+ * @returns The string or `""`.
+ */
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
 }
 
+/**
+ * Value as a plain object, or null for anything else, including arrays.
+ *
+ * @param v - Any value.
+ * @returns The object or null.
+ */
 function obj(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
 }
 
+/**
+ * Whether a tool name belongs to an MCP server (`mcp__<server>__<tool>`).
+ *
+ * @param toolName - Tool name.
+ * @returns True for MCP tools.
+ */
 function isMcp(toolName: string): boolean {
   return toolName.startsWith("mcp__");
 }
@@ -157,6 +175,13 @@ function parseGrepMatches(value: unknown): GrepMatch[] {
   return [];
 }
 
+/**
+ * Normalize one Grep result line. Strings in `file:line:text` form are split; other strings become
+ * text-only matches; objects are read field by field.
+ *
+ * @param raw - One result entry.
+ * @returns The match, or null when nothing usable was found.
+ */
 function toMatch(raw: unknown): GrepMatch | null {
   if (typeof raw === "string") {
     const m = raw.match(/^(.+?):(\d+):(.*)$/);
@@ -176,6 +201,13 @@ function toMatch(raw: unknown): GrepMatch | null {
   return match;
 }
 
+/**
+ * Read a list of file paths from a tool result: an array of strings, or an object with a `files` or
+ * `paths` array.
+ *
+ * @param value - Tool result.
+ * @returns The paths, or an empty list.
+ */
 function parseFileList(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
   const o = obj(value);
@@ -195,7 +227,9 @@ export function ToolInputView({
   toolName,
   input,
 }: {
+  /** Tool name, used to pick a tool-specific view; null for unknown tools. */
   toolName: string | null;
+  /** The tool call's input. */
   input: unknown;
 }): React.ReactNode | null {
   if (!toolName) return null;
@@ -344,7 +378,9 @@ export function ToolResponseView({
   toolName,
   response,
 }: {
+  /** Tool name, used to pick a tool-specific view; null for unknown tools. */
   toolName: string | null;
+  /** The tool call's response. */
   response: unknown;
 }): React.ReactNode | null {
   if (!toolName) return null;
