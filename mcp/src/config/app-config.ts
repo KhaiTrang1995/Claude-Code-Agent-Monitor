@@ -150,7 +150,12 @@ const LOCAL_DASHBOARD_HOSTS = new Set([
 const VALID_LOG_LEVELS = new Set<LogLevel>(["debug", "info", "warn", "error"]);
 
 /** Parses `1/true/yes/on` / `0/false/no/off` (case-insensitive); anything
- * else, including `undefined`, resolves to `fallback`. */
+ * else, including `undefined`, resolves to `fallback`.
+ *
+ * @param value - Raw environment value.
+ * @param fallback - Result for missing or unrecognized values.
+ * @returns The parsed flag.
+ */
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) return fallback;
   const normalized = value.trim().toLowerCase();
@@ -160,7 +165,14 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
 }
 
 /** Parses and clamps an integer env var into `[min, max]`; non-numeric or
- * missing input falls back to `fallback` rather than throwing. */
+ * missing input falls back to `fallback` rather than throwing.
+ *
+ * @param value - Raw environment value.
+ * @param fallback - Result for missing or non-numeric values.
+ * @param min - Lowest allowed value.
+ * @param max - Highest allowed value.
+ * @returns The clamped integer.
+ */
 function parseInteger(
   value: string | undefined,
   fallback: number,
@@ -173,7 +185,12 @@ function parseInteger(
   return Math.min(max, Math.max(min, parsed));
 }
 
-/** Normalizes `MCP_LOG_LEVEL`, falling back to `"info"`. */
+/**
+ * Normalizes `MCP_LOG_LEVEL`, falling back to `"info"`.
+ *
+ * @param value - Raw `MCP_LOG_LEVEL` value.
+ * @returns A valid log level.
+ */
 function parseLogLevel(value: string | undefined): LogLevel {
   const normalized = value?.trim().toLowerCase() as LogLevel | undefined;
   return normalized && VALID_LOG_LEVELS.has(normalized) ? normalized : "info";
@@ -185,6 +202,9 @@ function parseLogLevel(value: string | undefined): LogLevel {
  * target is startup-fatal, not something to paper over.
  * @throws {Error} on an invalid URL, a non-http(s) scheme, or a hostname
  *   outside {@link LOCAL_DASHBOARD_HOSTS}.
+ *
+ * @param raw - Raw `MCP_DASHBOARD_BASE_URL`; defaults to `http://127.0.0.1:4820`.
+ * @returns The validated URL.
  */
 function parseDashboardUrl(raw: string | undefined): URL {
   const value = (raw ?? "http://127.0.0.1:4820").trim();
@@ -278,7 +298,11 @@ function parseDashboardToken(env: NodeJS.ProcessEnv, dashboardBaseUrl: URL): str
 }
 
 /** Normalizes `MCP_TRANSPORT`, falling back to `"stdio"`. This is only the
- * default — `index.ts`'s `resolveTransport` may override it with CLI flags. */
+ * default — `index.ts`'s `resolveTransport` may override it with CLI flags.
+ *
+ * @param value - Raw `MCP_TRANSPORT` value.
+ * @returns `stdio`, `http`, or `repl`.
+ */
 function parseTransport(value: string | undefined): TransportMode {
   const normalized = value?.trim().toLowerCase();
   if (normalized === "http" || normalized === "repl" || normalized === "stdio") return normalized;

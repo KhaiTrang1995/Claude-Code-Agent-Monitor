@@ -271,6 +271,10 @@ export function getServerSnapshot(): ServerSnapshot | null {
  * Fetch a fresh snapshot from the running server's stats API. Resolves to
  * `null` on any error (server not up yet, non-200, malformed JSON) so the
  * poller can simply keep the previous cached value.
+ *
+ * @param port - Port of the local server.
+ * @param timeoutMs - Request timeout; defaults to 2.5 seconds.
+ * @returns The snapshot, or null on any failure.
  */
 function fetchSnapshotOverHttp(port: number, timeoutMs = 2500): Promise<ServerSnapshot | null> {
   // Server expects tz_offset in minutes (Date#getTimezoneOffset) to compute
@@ -320,7 +324,12 @@ function fetchSnapshotOverHttp(port: number, timeoutMs = 2500): Promise<ServerSn
   });
 }
 
-/** Poll once now and update the cache. Safe to call on demand (e.g. menu open). */
+/**
+ * Poll once now and update the cache. Safe to call on demand (e.g. menu open).
+ *
+ * @param port - Port of the local server, or null when no server is running (the call is then a
+ *   no-op).
+ */
 export async function refreshServerSnapshot(port: number | null): Promise<void> {
   if (!port) return;
   const snap = await fetchSnapshotOverHttp(port);
@@ -331,6 +340,9 @@ export async function refreshServerSnapshot(port: number | null): Promise<void> 
  * Begin polling the server's stats endpoint so the tray menu always reflects
  * recent state. Idempotent — a second call (e.g. after "Restart Server") is a
  * no-op. The timer is unref'd so it never keeps the event loop alive on quit.
+ *
+ * @param getPort - Returns the server's current port, or null while none is running.
+ * @param intervalMs - Poll interval; defaults to 4 seconds.
  */
 export function startSnapshotPolling(getPort: () => number | null, intervalMs = 4000): void {
   if (snapshotTimer) return;
@@ -399,6 +411,10 @@ function resolveAppRoot(): string {
  *
  * Used both for startup port selection (`pickFreePort`) and for deciding
  * whether to adopt an already-running server (`startEmbeddedServer`).
+ *
+ * @param port - Port to classify.
+ * @param timeoutMs - Timeout for the connection and health request; defaults to 1.5 seconds.
+ * @returns `free`, `healthy`, or `busy`.
  */
 async function probePort(port: number, timeoutMs = 1500): Promise<"healthy" | "busy" | "free"> {
   // 1. Is anything listening? Try to connect.
@@ -478,6 +494,10 @@ async function pickFreePort(): Promise<number> {
  * usable — Express's `listen()` callback fires as soon as the socket is
  * bound, which can be before the app has finished any async initialization
  * that gates `/api/health`.
+ *
+ * @param port - Port the server was just bound to.
+ * @param timeoutMs - How long to wait; defaults to 30 seconds.
+ * @throws {Error} When the server does not report healthy in time.
  */
 async function waitForHealthy(port: number, timeoutMs = HEALTH_TIMEOUT_MS): Promise<void> {
   const deadline = Date.now() + timeoutMs;

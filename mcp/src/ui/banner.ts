@@ -99,7 +99,10 @@ export function printBanner(): void {
 /** Prints a boxed config summary beneath the banner, shared by HTTP (`port`
  * set) and REPL (`port` omitted). Mutations/Destructive rows mirror the
  * `policy/tool-guards.ts` flags, warning-colored when enabled. Ends with a
- * reminder that the dashboard must already be running at the printed URL. */
+ * reminder that the dashboard must already be running at the printed URL.
+ *
+ * @param info - Values to show in the panel.
+ */
 export function printServerInfo(info: {
   /** Transport description, for example `http (sse + streamable)`. */
   transport: string;
@@ -150,7 +153,10 @@ export function printServerInfo(info: {
 }
 
 /** Prints "Server ready" once the HTTP server has bound to its port; not
- * used by the REPL transport. */
+ * used by the REPL transport.
+ *
+ * @param transport - Transport description shown after the message.
+ */
 export function printReady(transport: string): void {
   const icon = "✔";
   process.stdout.write(
