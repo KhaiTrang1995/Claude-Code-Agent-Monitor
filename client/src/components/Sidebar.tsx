@@ -330,7 +330,11 @@ function CollapsedLanguagePicker({
     };
   }, [open, positionMenu]);
 
-  /** Pick a language, close the menu, and return focus to the trigger. */
+  /**
+   * Pick a language, close the menu, and return focus to the trigger.
+   *
+   * @param language - Chosen language.
+   */
   const chooseLanguage = (language: SupportedLanguage) => {
     onChange(language);
     setOpen(false);
@@ -637,7 +641,11 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     hint: t(`nav:languageShort.${language}`),
   }));
 
-  /** Switch the UI language, skipping the change when it is already active. */
+  /**
+   * Switch the UI language, skipping the change when it is already active.
+   *
+   * @param language - Language to switch to.
+   */
   const changeLanguage = (language: SupportedLanguage) => {
     if (language !== currentLanguage) {
       i18n.changeLanguage(language);

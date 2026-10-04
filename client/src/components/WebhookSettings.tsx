@@ -261,7 +261,11 @@ export function WebhookSettings() {
       .catch(() => setRules([]));
   }, []);
 
-  /** Merge a change into the open form. */
+  /**
+   * Merge a change into the open form.
+   *
+   * @param patch - Fields to change.
+   */
   const set = (patch: Partial<FormState>) =>
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
 
@@ -288,6 +292,8 @@ export function WebhookSettings() {
   /**
    * Open the form to edit a target. Non-secret settings are prefilled; secret fields and the URL
    * start blank, since they are redacted and only re-entered to change them.
+   *
+   * @param target - Target to edit.
    */
   const openEdit = (target: WebhookTarget) => {
     const provider = providerOf(target.type);
@@ -411,7 +417,11 @@ export function WebhookSettings() {
     }
   };
 
-  /** Enable or disable a target, then reload. */
+  /**
+   * Enable or disable a target, then reload.
+   *
+   * @param target - Target to toggle.
+   */
   const onToggle = async (target: WebhookTarget) => {
     try {
       await api.webhooks.update(target.id, { enabled: !target.enabled });
@@ -421,7 +431,11 @@ export function WebhookSettings() {
     }
   };
 
-  /** Delete a target, then reload. */
+  /**
+   * Delete a target, then reload.
+   *
+   * @param id - Id of the target to delete.
+   */
   const onDelete = async (id: string) => {
     try {
       await api.webhooks.remove(id);
@@ -432,7 +446,11 @@ export function WebhookSettings() {
     }
   };
 
-  /** Send a test alert to a target and show the outcome next to it. */
+  /**
+   * Send a test alert to a target and show the outcome next to it.
+   *
+   * @param id - Id of the target to test.
+   */
   const onTest = async (id: string) => {
     setTesting(id);
     setTestResult((prev) => {
@@ -454,7 +472,12 @@ export function WebhookSettings() {
     }
   };
 
-  /** Display label for a provider type. */
+  /**
+   * Display label for a provider type.
+   *
+   * @param type - Provider type.
+   * @returns The provider's label, or the type itself when unknown.
+   */
   const labelOf = (type: WebhookType) => providerOf(type)?.label || type;
 
   return (

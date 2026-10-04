@@ -939,7 +939,11 @@ function Tabs({ current, onSelect, counts }: TabsProps) {
     }
   }, [current]);
 
-  /** Scroll the tab bar by most of its visible width, at least 200px. */
+  /**
+   * Scroll the tab bar by most of its visible width, at least 200px.
+   *
+   * @param dir - Direction: 1 for right, -1 for left.
+   */
   const scrollByButton = (dir: 1 | -1) => {
     const el = scrollRef.current;
     if (!el) return;
@@ -949,6 +953,9 @@ function Tabs({ current, onSelect, counts }: TabsProps) {
   /**
    * Badge count for a tab: user plus project counts where the overview splits them, or null when
    * there is no count.
+   *
+   * @param key - Tab to count.
+   * @returns The count, or null.
    */
   const countFor = (key: TabKey): number | null => {
     if (!counts) return null;
@@ -1937,7 +1944,12 @@ function McpPanel({ data, search }: { data: CcMcpResponse | null; search: string
   const { t } = useTranslation("ccConfig");
   if (!data) return <SkeletonRows n={3} />;
   const all = [...data.user, ...data.projectScoped];
-  /** Servers whose name contains the search text. */
+  /**
+   * Servers whose name contains the search text.
+   *
+   * @param arr - Servers to filter.
+   * @returns The matching servers.
+   */
   const filter = (arr: CcMcpServer[]) =>
     arr.filter((s) => !search || s.name.toLowerCase().includes(search.toLowerCase()));
   return (
@@ -2694,6 +2706,9 @@ function MemoryPanel({
 
     /**
      * Whether an auto-memory file matches the search text (name, project, frontmatter, or preview).
+     *
+     * @param m - Auto-memory file.
+     * @returns True when it matches or there is no search text.
      */
     const matchesAuto = (m: CcMemoryItem) => {
       if (!q) return true;
@@ -3280,15 +3295,31 @@ function KeybindingsPanel({
     setErr(null);
   }, []);
 
-  /** Rename a context in the draft. */
+  /**
+   * Rename a context in the draft.
+   *
+   * @param gi - Index of the context.
+   * @param value - New context name.
+   */
   const updateContext = (gi: number, value: string) =>
     setDraft((d) => d.map((g, i) => (i === gi ? { ...g, context: value } : g)));
-  /** Remove a context and its bindings from the draft. */
+  /**
+   * Remove a context and its bindings from the draft.
+   *
+   * @param gi - Index of the context.
+   */
   const removeContext = (gi: number) => setDraft((d) => d.filter((_, i) => i !== gi));
   /** Add an empty context with one empty binding. */
   const addContext = () =>
     setDraft((d) => [...d, { context: "", bindings: [{ key: "", action: "" }] }]);
-  /** Change a binding's key or action in the draft. */
+  /**
+   * Change a binding's key or action in the draft.
+   *
+   * @param gi - Index of the context.
+   * @param bi - Index of the binding.
+   * @param field - Field to change.
+   * @param value - New value.
+   */
   const updateBinding = (gi: number, bi: number, field: "key" | "action", value: string) =>
     setDraft((d) =>
       d.map((g, i) =>
@@ -3297,12 +3328,21 @@ function KeybindingsPanel({
           : g
       )
     );
-  /** Remove one binding from the draft. */
+  /**
+   * Remove one binding from the draft.
+   *
+   * @param gi - Index of the context.
+   * @param bi - Index of the binding.
+   */
   const removeBinding = (gi: number, bi: number) =>
     setDraft((d) =>
       d.map((g, i) => (i === gi ? { ...g, bindings: g.bindings.filter((_, j) => j !== bi) } : g))
     );
-  /** Add an empty binding to a context. */
+  /**
+   * Add an empty binding to a context.
+   *
+   * @param gi - Index of the context.
+   */
   const addBinding = (gi: number) =>
     setDraft((d) =>
       d.map((g, i) => (i === gi ? { ...g, bindings: [...g.bindings, { key: "", action: "" }] } : g))

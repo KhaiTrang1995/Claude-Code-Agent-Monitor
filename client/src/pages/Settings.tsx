@@ -446,6 +446,8 @@ function useCountUp(end: number | null, durationMs = 1000) {
     /**
      * One animation frame: move toward the target along an ease-out-quart curve and schedule the
      * next frame until done.
+     *
+     * @param timestamp - Frame time from `requestAnimationFrame`.
      */
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -722,7 +724,11 @@ function GptPricingTable({
     return () => cancelAnimationFrame(frame);
   }, [adding]);
 
-  /** Start editing a GPT rule, copying its values into the draft. */
+  /**
+   * Start editing a GPT rule, copying its values into the draft.
+   *
+   * @param rule - Rule to edit.
+   */
   const edit = (rule: GptModelPricing) => {
     const next = emptyGptDraft();
     next.model_pattern = rule.model_pattern;
@@ -766,7 +772,11 @@ function GptPricingTable({
       setBusy(false);
     }
   };
-  /** Delete a GPT rule after a browser confirmation, then reload. */
+  /**
+   * Delete a GPT rule after a browser confirmation, then reload.
+   *
+   * @param pattern - Model pattern of the rule to delete.
+   */
   const remove = async (pattern: string) => {
     if (!window.confirm(t("pricing.gpt.deleteConfirm"))) return;
     try {
@@ -776,7 +786,13 @@ function GptPricingTable({
       setError(err instanceof Error ? err.message : t("messages.failedDelete"));
     }
   };
-  /** Render the input for one draft field; rate fields get a `$` prefix. */
+  /**
+   * Render the input for one draft field; rate fields get a `$` prefix.
+   *
+   * @param field - Draft field to render.
+   * @param className - Extra classes for the input.
+   * @returns The input element.
+   */
   const input = (field: keyof GptDraft, className = "") => {
     const isRate = field.endsWith("_mtok");
     return (
@@ -1051,7 +1067,11 @@ function CursorPricingTable({
     setAdding(false);
     setError(null);
   };
-  /** Start editing a Cursor rule, copying its values into the draft. */
+  /**
+   * Start editing a Cursor rule, copying its values into the draft.
+   *
+   * @param rule - Rule to edit.
+   */
   const edit = (rule: CursorModelPricing) => {
     const next = emptyCursorDraft();
     next.model_pattern = rule.model_pattern;
@@ -1089,7 +1109,11 @@ function CursorPricingTable({
       setBusy(false);
     }
   };
-  /** Delete a Cursor rule after a browser confirmation, then reload. */
+  /**
+   * Delete a Cursor rule after a browser confirmation, then reload.
+   *
+   * @param pattern - Model pattern of the rule to delete.
+   */
   const remove = async (pattern: string) => {
     if (!window.confirm(t("pricing.cursor.deleteConfirm"))) return;
     try {
@@ -1099,7 +1123,12 @@ function CursorPricingTable({
       setError(err instanceof Error ? err.message : t("messages.failedDelete"));
     }
   };
-  /** Render the input for one draft field; rate fields get a `$` prefix. */
+  /**
+   * Render the input for one draft field; rate fields get a `$` prefix.
+   *
+   * @param field - Draft field to render.
+   * @returns The input element.
+   */
   const input = (field: keyof CursorDraft) => {
     const isRate = field.endsWith("_mtok");
     return (
@@ -1290,7 +1319,11 @@ function HookInstallModal({
   }, [open]);
 
   if (!open) return null;
-  /** Add or remove a provider from the install selection. */
+  /**
+   * Add or remove a provider from the install selection.
+   *
+   * @param provider - Provider to toggle.
+   */
   const toggle = (provider: "claude" | "codex") => {
     setSelected((current) =>
       current.includes(provider)
@@ -1298,11 +1331,19 @@ function HookInstallModal({
         : [...current, provider]
     );
   };
-  /** Whether the dashboard's hooks are already fully installed for a provider. */
+  /**
+   * Whether the dashboard's hooks are already fully installed for a provider.
+   *
+   * @param provider - Provider to check.
+   * @returns True when fully installed.
+   */
   const installed = (provider: "claude" | "codex") => status?.providers?.[provider]?.installed;
   /**
    * Whether a provider's config already has hooks, ours or another tool's, so the modal can say
    * they will be preserved.
+   *
+   * @param provider - Provider to check.
+   * @returns True when the config has any hooks.
    */
   const hasExistingHooks = (provider: "claude" | "codex") =>
     status?.providers?.[provider]?.has_existing_hooks || installed(provider);
@@ -1676,7 +1717,11 @@ export function Settings() {
     return () => clearTimeout(timeout);
   }, [actionResult]);
 
-  /** Apply a change to the notification preferences and persist it. */
+  /**
+   * Apply a change to the notification preferences and persist it.
+   *
+   * @param patch - Preferences to change.
+   */
   const updateNotifPrefs = (patch: Partial<NotifPrefs>) => {
     setNotifPrefs((prev) => {
       const next = { ...prev, ...patch };
@@ -1698,7 +1743,11 @@ export function Settings() {
     }
   };
 
-  /** Start editing a Claude pricing rule, copying its values into the form. */
+  /**
+   * Start editing a Claude pricing rule, copying its values into the form.
+   *
+   * @param rule - Rule to edit.
+   */
   const startEdit = (rule: ModelPricing) => {
     setAdding(false);
     setEditingPattern(rule.model_pattern);
@@ -1782,7 +1831,11 @@ export function Settings() {
     }
   };
 
-  /** Delete a Claude pricing rule, then reload. */
+  /**
+   * Delete a Claude pricing rule, then reload.
+   *
+   * @param pattern - Model pattern of the rule to delete.
+   */
   const deleteRule = async (pattern: string) => {
     try {
       await api.pricing.delete(pattern);
@@ -1795,6 +1848,9 @@ export function Settings() {
   /**
    * Run a Settings action with a loading state, clearing any pending confirmation and showing the
    * result or error in that section's banner.
+   *
+   * @param key - Action key, which picks the banner that shows the result.
+   * @param fn - Performs the action and returns the success message.
    */
   const runAction = async (key: string, fn: () => Promise<string>) => {
     setActionLoading(key);
@@ -1828,6 +1884,9 @@ export function Settings() {
   /**
    * Reset one provider's pricing table to its defaults, bump the reset revision so the tables
    * reload, and report how many rules it now has.
+   *
+   * @param actionKey - Action key for the result banner; defaults to the Claude table's.
+   * @param provider - Table to reset; defaults to Claude.
    */
   const handleResetPricing = (
     actionKey = "reset-pricing",
@@ -2083,6 +2142,9 @@ export function Settings() {
   /**
    * Result banner for the action keys given, or null when the latest result belongs to another
    * section.
+   *
+   * @param keys - Action keys owned by the section.
+   * @returns The banner, or null.
    */
   const actionBanner = (keys: string[]) => {
     const match = actionResult && keys.includes(actionResult.key) ? actionResult : null;

@@ -284,6 +284,9 @@ function transcriptToEnvelopes(messages: TranscriptMessage[]): Envelope[] {
   /**
    * Map one transcript content block to its stream-json equivalent, renaming the fields that
    * differ. Unknown block kinds are dropped.
+   *
+   * @param b - Transcript content block.
+   * @returns The stream-json block, or null for unknown kinds.
    */
   const mapBlock = (b: TranscriptContent): ContentBlock | null => {
     if (b.type === "text") return { type: "text", text: b.text || "" };
@@ -1567,7 +1570,11 @@ function LimitationsBanner() {
     }
   });
   const [expanded, setExpanded] = useState(false);
-  /** Store the minimized state and apply it; storage failures are ignored. */
+  /**
+   * Store the minimized state and apply it; storage failures are ignored.
+   *
+   * @param v - True to minimize.
+   */
   const persistMinimized = (v: boolean) => {
     try {
       localStorage.setItem(LIMITATIONS_MINIMIZED_KEY, v ? "1" : "0");
@@ -2316,6 +2323,8 @@ function PromptEditor({
   /**
    * Replace the trigger token with the chosen suggestion (`/name` or `@path`), adding a space after
    * it unless one already follows, then put the caret after it.
+   *
+   * @param choice - Chosen slash command, or a file path for `@` completion.
    */
   const insertChoice = (choice: SlashCommand | string) => {
     if (!state || !taRef.current) return;
@@ -3732,7 +3741,11 @@ function CwdAutocomplete({
     if (active >= flat.length) setActive(Math.max(0, flat.length - 1));
   }, [flat.length, active]);
 
-  /** Use a suggestion, close the dropdown, and blur the input. */
+  /**
+   * Use a suggestion, close the dropdown, and blur the input.
+   *
+   * @param s - Chosen suggestion.
+   */
   const choose = (s: CwdSuggestion) => {
     onChange(s.path);
     setOpen(false);
@@ -4060,6 +4073,8 @@ function ModelPicker({
   /**
    * Handle a dropdown choice: the custom option reveals the free-text input; any other option
    * selects that model.
+   *
+   * @param v - Chosen option value.
    */
   const onSelect = (v: string) => {
     if (v === MODEL_CUSTOM) {

@@ -244,6 +244,8 @@ function messageText(m: TranscriptMessage): string {
  * has text carries the returned result. Either is "" when absent (e.g. a
  * schema-mode agent whose final turn is a tool call rather than text) - callers
  * fall back to the journal teaser in that case.
+ *
+ * @param messages - The agent's transcript messages.
  */
 export function extractPromptResult(messages: TranscriptMessage[]): {
   /** The agent's task prompt: the first user message with text. */
@@ -381,7 +383,11 @@ export function WorkflowRunsPanel({
 
   const runs = controlled ? controlledRuns : fetchedRuns;
 
-  /** Expand or collapse a run. */
+  /**
+   * Expand or collapse a run.
+   *
+   * @param runId - Run to toggle.
+   */
   const toggle = (runId: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -389,10 +395,19 @@ export function WorkflowRunsPanel({
       else next.add(runId);
       return next;
     });
-  /** Filter a run's results by phase; choosing the active phase again clears the filter. */
+  /**
+   * Filter a run's results by phase; choosing the active phase again clears the filter.
+   *
+   * @param runId - Run whose results to filter.
+   * @param phase - Phase to show.
+   */
   const setPhase = (runId: string, phase: string) =>
     setPhaseFilter((prev) => ({ ...prev, [runId]: prev[runId] === phase ? null : phase }));
-  /** Expand or collapse one agent result. */
+  /**
+   * Expand or collapse one agent result.
+   *
+   * @param key - Result key, `<run id>::<agent id>`.
+   */
   const toggleResult = (key: string) =>
     setOpenResults((prev) => {
       const next = new Set(prev);

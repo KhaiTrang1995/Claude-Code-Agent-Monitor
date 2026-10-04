@@ -119,7 +119,12 @@ export function DateTimePicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /** Short localized label for the trigger, or an empty string for an invalid date. */
+  /**
+   * Short localized label for the trigger, or an empty string for an invalid date.
+   *
+   * @param d - Selected date, or null.
+   * @returns The label.
+   */
   const formatDisplay = (d: Date | null) => {
     if (!d || isNaN(d.getTime())) return "";
     return d.toLocaleString(undefined, {
@@ -132,6 +137,8 @@ export function DateTimePicker({
 
   /**
    * Pick a calendar day, keeping the current time of day (midnight when nothing was selected yet).
+   *
+   * @param day - Day of the month in the viewed month.
    */
   const handleDateClick = (day: number) => {
     const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
@@ -159,7 +166,11 @@ export function DateTimePicker({
     updateValue(newDate);
   };
 
-  /** Report a date to the parent in `YYYY-MM-DDTHH:mm` local time. */
+  /**
+   * Report a date to the parent in `YYYY-MM-DDTHH:mm` local time.
+   *
+   * @param d - Date to report.
+   */
   const updateValue = (d: Date) => {
     const y = d.getFullYear();
     const mo = String(d.getMonth() + 1).padStart(2, "0");
