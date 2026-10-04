@@ -77,7 +77,12 @@ import type { UpdateStatusPayload, WSMessage } from "../lib/types";
 /** `localStorage` key storing the dismissed upstream SHA. */
 const DISMISS_KEY = "agent-monitor-update-dismissed-sha";
 
-/** Narrow unknown WebSocket payloads to {@link UpdateStatusPayload}. */
+/**
+ * Narrow unknown WebSocket payloads to {@link UpdateStatusPayload}.
+ *
+ * @param x - Message data.
+ * @returns True when it is an update status payload.
+ */
 function isUpdatePayload(x: unknown): x is UpdateStatusPayload {
   return typeof x === "object" && x !== null && "git_repo" in x && "update_available" in x;
 }

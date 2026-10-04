@@ -405,7 +405,12 @@ function formatUptime(seconds: number): string {
   return `${m}m`;
 }
 
-/** Format a published USD-per-million-token rate without exposing float noise. */
+/**
+ * Format a published USD-per-million-token rate without exposing float noise.
+ *
+ * @param rate - USD per million tokens.
+ * @returns The rate without trailing float noise.
+ */
 function formatUsdRate(rate: number): string {
   if (!Number.isFinite(rate) || rate <= 0) return "—";
   return new Intl.NumberFormat(getCurrentLocale(), {

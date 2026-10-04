@@ -140,6 +140,8 @@ function loadState(): WindowState {
  * would silently discard the user's last real resize/move. Failures (e.g.
  * a read-only `userData` dir) are logged, not thrown — losing the saved
  * geometry is cosmetic, not fatal.
+ *
+ * @param win - Window whose bounds to save.
  */
 function saveState(win: BrowserWindow): void {
   if (win.isDestroyed() || win.isMinimized()) return;

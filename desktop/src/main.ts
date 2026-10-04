@@ -223,7 +223,11 @@ function openInBrowser(): void {
 
 /** Show a blocking native error dialog. Used only for conditions the user
  * must see immediately and cannot recover from without restarting the app
- * (e.g. the embedded server failing to boot at all). */
+ * (e.g. the embedded server failing to boot at all).
+ *
+ * @param message - Headline of the error.
+ * @param detail - Optional details shown under it.
+ */
 function showFatalDialog(message: string, detail?: string): void {
   dialog.showErrorBox(`${APP_NAME} — Error`, detail ? `${message}\n\n${detail}` : message);
 }

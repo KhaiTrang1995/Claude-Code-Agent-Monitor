@@ -1485,7 +1485,11 @@ function ProfileLaunchCommand({ name, t }: { name: string; t: TFunction }) {
 
 /** Copy from secure contexts with the native Clipboard API, while keeping the
  * dashboard's local HTTP and remote-browser sessions usable through a safe,
- * short-lived textarea fallback. */
+ * short-lived textarea fallback.
+ *
+ * @param value - Text to copy.
+ * @returns True when the copy succeeded.
+ */
 async function copyText(value: string): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {

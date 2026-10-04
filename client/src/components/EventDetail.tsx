@@ -89,7 +89,11 @@ type EventDetailProps = {
 /** Human-friendly label for an agent - `subagent_type · name` when both add
  *  signal, else whichever single field is present. Returns null for main
  *  agents whose name is just the session label (the agent_id row already
- *  carries the structural marker `<session>-main`, no need to repeat it). */
+ *  carries the structural marker `<session>-main`, no need to repeat it).
+ *
+ * @param info - Known agent details.
+ * @returns The label, or null when there is nothing friendlier than the raw id.
+ */
 function agentDisplayLabel(info: AgentInfo): string | null {
   if (info.type === "main") {
     return info.name && info.name.trim().length > 0 ? info.name : null;
@@ -145,7 +149,11 @@ const PAYLOAD_LABEL_KEYS: Record<string, string> = {
 
 /** Convert `snake_case` / `camelCase` to a human-readable Title Case label
  *  for any payload key not in PAYLOAD_LABEL_KEYS. Defensive fallback so
- *  every row reads naturally even when a new hook field appears. */
+ *  every row reads naturally even when a new hook field appears.
+ *
+ * @param key - Raw payload key, such as `tool_input`.
+ * @returns A readable label.
+ */
 function humanizeKey(key: string): string {
   return key
     .replace(/[_-]+/g, " ")

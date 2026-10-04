@@ -102,7 +102,12 @@ function defaultPos(): TabbyPos {
   return { side: "right", y: 0.5 }; // right edge, vertically centered
 }
 
-/** Resting top-left screen coords for a docked position. */
+/**
+ * Resting top-left screen coords for a docked position.
+ *
+ * @param pos - Docked side and vertical fraction.
+ * @returns Screen coordinates of the avatar's top-left corner.
+ */
 function restingScreen(pos: TabbyPos) {
   const avail = Math.max(0, vh() - TABBY_SIZE - 2 * TABBY_MARGIN);
   const left = pos.side === "left" ? TABBY_MARGIN : vw() - TABBY_SIZE - TABBY_MARGIN;

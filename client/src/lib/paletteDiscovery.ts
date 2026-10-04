@@ -137,7 +137,12 @@ export function markPaletteDiscovered(): void {
   listeners.forEach((listener) => listener());
 }
 
-/** Subscribe to the one transition this store can make. */
+/**
+ * Subscribe to the one transition this store can make.
+ *
+ * @param listener - Called when the discovered flag changes.
+ * @returns A function that unsubscribes.
+ */
 export function subscribeToPaletteDiscovery(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

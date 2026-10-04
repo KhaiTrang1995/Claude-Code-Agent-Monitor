@@ -108,7 +108,14 @@ function ReasonChip({ reason }: { reason: AwaitingReason }) {
   );
 }
 
-/** Provider-aware explanation of a waiting reason (tooltip text). */
+/**
+ * Provider-aware explanation of a waiting reason (tooltip text).
+ *
+ * @param t - Translation function.
+ * @param reason - Why the agent or session is waiting.
+ * @param provider - Product, for provider-specific wording.
+ * @returns The tooltip description.
+ */
 function reasonDescription(
   t: TFunction,
   reason: AwaitingReason,

@@ -95,12 +95,23 @@ type HookStatus = {
   >;
 };
 
-/** Providers whose live dashboard hooks must be ready for a selected scope. */
+/**
+ * Providers whose live dashboard hooks must be ready for a selected scope.
+ *
+ * @param provider - Selected product scope.
+ * @returns The providers whose hooks are needed.
+ */
 export function hookProvidersForScope(provider: ProviderScope): HookProvider[] {
   return provider === "both" ? ["claude", "codex"] : [provider];
 }
 
-/** Selected providers that still need dashboard hooks. Unknown status is missing. */
+/**
+ * Selected providers that still need dashboard hooks. Unknown status is missing.
+ *
+ * @param provider - Selected product scope.
+ * @param status - Hook status from the server, or nothing when it could not be loaded.
+ * @returns Providers without fully installed hooks.
+ */
 export function missingHookProviders(
   provider: ProviderScope,
   status: HookStatus | null | undefined
@@ -110,7 +121,12 @@ export function missingHookProviders(
   );
 }
 
-/** Map the local hour to a greeting bucket. */
+/**
+ * Map the local hour to a greeting bucket.
+ *
+ * @param hour - Local hour, 0 to 23.
+ * @returns The greeting bucket.
+ */
 function greetingKey(hour: number): "morning" | "afternoon" | "evening" | "night" {
   if (hour >= 5 && hour < 12) return "morning";
   if (hour >= 12 && hour < 17) return "afternoon";

@@ -186,6 +186,9 @@ function hashStr(s: string): number {
  * often a (frequently truncated) JSON blob. Prefer a known content field, then
  * the first substantial quoted string, then a de-JSON'd snippet - so the panel
  * shows a sentence instead of raw `{"angle":"…","findings":[{"claim":"…`.
+ *
+ * @param raw - Result preview from the run journal.
+ * @returns A short readable excerpt.
  */
 export function friendlyPreview(raw: unknown): string {
   if (!raw) return "";
@@ -205,7 +208,12 @@ export function friendlyPreview(raw: unknown): string {
   return s;
 }
 
-/** Full, un-truncated content for the expanded view - pretty-printed if JSON. */
+/**
+ * Full, un-truncated content for the expanded view - pretty-printed if JSON.
+ *
+ * @param raw - Result content.
+ * @returns The full text, pretty-printed when it is JSON.
+ */
 export function fullPreview(raw: unknown): string {
   if (raw == null) return "";
   const s = String(raw);
@@ -216,7 +224,12 @@ export function fullPreview(raw: unknown): string {
   }
 }
 
-/** Join the text blocks of one transcript message into a single string. */
+/**
+ * Join the text blocks of one transcript message into a single string.
+ *
+ * @param m - Transcript message.
+ * @returns The message's text blocks joined, or an empty string.
+ */
 function messageText(m: TranscriptMessage): string {
   return (m.content || [])
     .filter((b) => b.type === "text" && b.text)

@@ -427,6 +427,9 @@ const BASE = "/api";
  * so changing a machine or product scope narrows the whole app without every
  * call site threading it. An all-machine / both-product selection yields no
  * added filter, so unscoped installs hit clean URLs.
+ *
+ * @param qs - Query parameters being built.
+ * @returns The same parameters with the scope applied.
  */
 function applyScope(qs: URLSearchParams): URLSearchParams {
   if (!qs.has("sources")) {

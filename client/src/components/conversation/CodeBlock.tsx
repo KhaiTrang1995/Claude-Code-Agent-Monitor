@@ -107,6 +107,9 @@ function langDisplay(lang: string): string {
 /**
  * Split tokens that span multiple lines so we can render one line at a time
  * (necessary for the gutter line-number column to align).
+ *
+ * @param tokens - Highlighted tokens for the whole block.
+ * @returns Tokens grouped per line, splitting tokens that span newlines.
  */
 function splitTokensByLine(tokens: Token[]): Token[][] {
   const lines: Token[][] = [[]];

@@ -164,6 +164,9 @@ function trayImagePath(): string {
  * `Tray#setContextMenu` — a static, pre-assigned menu that Electron shows
  * automatically on click, with no hook for the `refreshSnapshot()` call that
  * needs to run first so the dropdown reflects the very latest counts.
+ *
+ * @param actions - Callbacks the tray menu items trigger.
+ * @returns The tray icon.
  */
 export function createTray(actions: TrayActions): Tray {
   const imagePath = trayImagePath();

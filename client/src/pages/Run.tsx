@@ -709,6 +709,9 @@ function mergeEnvelope(prev: Envelope[], envelope: Envelope): Envelope[] {
  * The hook returns a derived envelope list with each actively-streaming
  * text/thinking block clamped to a displayed length that grows toward the
  * server's target via requestAnimationFrame.
+ *
+ * @param envelopes - Envelope log as received.
+ * @returns The log with streaming text and thinking clamped to what has been revealed so far.
  */
 function useTypewriterEnvelopes(envelopes: Envelope[]): Envelope[] {
   const lengthsRef = useRef<Map<string, number>>(new Map());
@@ -1738,6 +1741,9 @@ const DEFAULT_CONTEXT_WINDOW = 200_000;
  * during streaming) and the canonical `result.usage` envelope when the run
  * finishes. The 1M-context Opus variants emit `contextWindow` in
  * `result.modelUsage`; we surface that to size the meter correctly.
+ *
+ * @param envelopes - Envelope log.
+ * @returns Token totals for the meter.
  */
 function computeTokens(envelopes: Envelope[]): TokenStats {
   // Per-turn rolling counters (overwritten as each new turn's message_start
@@ -2082,6 +2088,10 @@ function commandSourceTone(s: SlashCommand["source"]): string {
  * `$ARGUMENTS` with whatever the user typed after the command name. If the
  * command isn't user-defined (built-in or unknown), returns the original
  * text unchanged so it still gets sent (the model will see it as text).
+ *
+ * @param text - Text the user is about to send.
+ * @param commands - Known slash commands.
+ * @returns The expanded prompt, or the original text.
  */
 async function maybeExpandSlashCommand(text: string, commands: SlashCommand[]): Promise<string> {
   const trimmed = text.trimStart();
@@ -2138,6 +2148,11 @@ interface AutocompleteState {
  *   5. Subsequence match across the name
  *   6. Description contains query - only when query is at least 3 chars,
  *      so a single keystroke can't drag in tangential descriptions.
+ *
+ * @param name - Command name.
+ * @param description - Command description, if any.
+ * @param q - Lowercased query.
+ * @returns A score, higher for better matches, or 0 for no match.
  */
 function scoreSlashMatch(name: string, description: string | undefined, q: string): number {
   if (!q) return 1;

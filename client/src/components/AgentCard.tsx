@@ -72,7 +72,11 @@ import { formatDuration, timeAgo, formatModelName, pathBasename, fmtCost } from 
 
 /** Keep a compact card's history legible: at most two distinct human turns,
  * one visual row each. This intentionally preserves a title-matching first
- * request when a terse follow-up depends on it for context. */
+ * request when a terse follow-up depends on it for context.
+ *
+ * @param value - Stored prompt context, possibly empty.
+ * @returns Up to two display lines.
+ */
 function promptPreviewLines(value: string | null | undefined): string[] {
   const seen = new Set<string>();
   return String(value || "")

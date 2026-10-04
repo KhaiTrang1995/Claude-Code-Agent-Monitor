@@ -86,6 +86,9 @@ function ensureStream(): fs.WriteStream {
  *     keeping a normal launch quiet.
  * The file write is wrapped in try/catch — a logging failure (e.g. a full
  * disk) must never take down the app.
+ *
+ * @param level - Severity.
+ * @param parts - Values to log, stringified and joined with spaces.
  */
 function write(level: "info" | "warn" | "error", parts: unknown[]): void {
   const line = `${new Date().toISOString()} [${level}] ${parts
@@ -104,7 +107,11 @@ function write(level: "info" | "warn" | "error", parts: unknown[]): void {
 }
 
 /** `JSON.stringify` a non-string log argument, falling back to `String()` for
- * values it can't serialize (e.g. circular objects or `BigInt`). */
+ * values it can't serialize (e.g. circular objects or `BigInt`).
+ *
+ * @param value - Any value.
+ * @returns The value as JSON, or `String(value)` when it cannot be serialized.
+ */
 function safeStringify(value: unknown): string {
   try {
     return JSON.stringify(value);

@@ -132,6 +132,10 @@ const QUIPS: Record<QuipKey, string[]> = {
 /**
  * Pick a quip for a key. `rand` is injectable for deterministic tests; defaults
  * to Math.random. Returns "" only for an unknown key (never throws).
+ *
+ * @param key - Pulse or mood to respond to.
+ * @param rand - Random source in [0, 1); injectable for tests.
+ * @returns One of the lines for that key.
  */
 export function pickQuip(key: QuipKey, rand: () => number = Math.random): string {
   const pool = QUIPS[key];

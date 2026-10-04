@@ -113,7 +113,11 @@ function formatCost(cost: number): string {
 }
 
 /** Two compact, distinct request rows give terse Claude and Codex follow-ups
- * surrounding context without allowing a session card to grow unbounded. */
+ * surrounding context without allowing a session card to grow unbounded.
+ *
+ * @param value - Stored prompt context, possibly empty.
+ * @returns Up to two display lines.
+ */
 function promptPreviewLines(value: string | null | undefined): string[] {
   const seen = new Set<string>();
   return String(value || "")

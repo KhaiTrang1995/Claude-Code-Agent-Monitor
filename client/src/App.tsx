@@ -95,6 +95,9 @@ import type { WSMessage } from "./lib/types";
  * API reference pages are served by Express, not the React dashboard. Keep
  * this guard for a stale shell or an unsupported API URL that reaches the SPA
  * fallback: developer documentation must never be obscured by onboarding.
+ *
+ * @param pathname - Current location path.
+ * @returns False for API reference paths, true elsewhere.
  */
 export function shouldShowOnboarding(pathname: string): boolean {
   return !pathname.startsWith("/api/");

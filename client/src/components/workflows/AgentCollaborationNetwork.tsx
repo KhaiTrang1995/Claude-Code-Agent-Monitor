@@ -256,6 +256,10 @@ function showTooltip(
  * Position a tooltip so its top-right corner sits near (x, y), but clamped to
  * the viewport so it never disappears behind the sidebar or the right edge.
  * Sets opacity to 1 to fade the tooltip in via its CSS transition.
+ *
+ * @param el - Tooltip element.
+ * @param x - Pointer x within the container.
+ * @param y - Pointer y within the container.
  */
 function positionTooltipAt(el: HTMLDivElement, x: number, y: number) {
   el.style.opacity = "0";

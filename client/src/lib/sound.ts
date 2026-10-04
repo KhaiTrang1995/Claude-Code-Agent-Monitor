@@ -430,7 +430,11 @@ const BURST_WINDOW_MS = 1200;
 
 /** Returns true when `cue` is allowed to play right now, recording the play if
  *  so. Guards against both a single event type repeating (per-cue cooldown) and
- *  an import or reconnect replaying hundreds of messages (burst budget). */
+ *  an import or reconnect replaying hundreds of messages (burst budget).
+ *
+ * @param cue - Cue that wants to play.
+ * @param now - Current time in epoch milliseconds.
+ */
 function allow(cue: CueName, now: number): boolean {
   const cooldown = COOLDOWN_MS[cue] ?? DEFAULT_COOLDOWN_MS;
   const last = lastPlayed.get(cue);

@@ -170,6 +170,8 @@ function readNotificationsEnabled(): boolean {
  * Write it back in the same shape, preserving the per-event flags. Enabling also
  * has to ask the browser for permission — a stored `true` with permission denied
  * is a toggle that lies.
+ *
+ * @param enabled - New value of the browser-notification master switch.
  */
 function writeNotificationsEnabled(enabled: boolean): void {
   try {
