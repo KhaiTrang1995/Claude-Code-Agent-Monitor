@@ -281,6 +281,10 @@ interface CodexEventEnvelope {
  * envelope arrives.
  */
 function transcriptToEnvelopes(messages: TranscriptMessage[]): Envelope[] {
+  /**
+   * Map one transcript content block to its stream-json equivalent, renaming the fields that
+   * differ. Unknown block kinds are dropped.
+   */
   const mapBlock = (b: TranscriptContent): ContentBlock | null => {
     if (b.type === "text") return { type: "text", text: b.text || "" };
     if (b.type === "thinking") return { type: "thinking", thinking: b.text || "" };
@@ -960,6 +964,10 @@ export function Run() {
     setResumeSession(null);
   }, [provider]);
 
+  /**
+   * Refresh both the live run list and the 50 most recent history rows. Failures are ignored; the
+   * next poll or WebSocket update catches up.
+   */
   const refreshList = useCallback(() => {
     api.run
       .list()
@@ -987,6 +995,7 @@ export function Run() {
   // current state of every run without waiting for the next poll.
   useEffect(() => {
     const onFocus = () => refreshList();
+    /** Refresh when the tab becomes visible again. */
     const onVis = () => {
       if (document.visibilityState === "visible") refreshList();
     };
@@ -1154,6 +1163,11 @@ export function Run() {
     followUpRef.current = followUp;
   }, [followUp]);
 
+  /**
+   * Start a run from the form. Resumes always use conversation mode, and user or project slash
+   * commands are expanded client-side so the model receives the rendered template, as the CLI does.
+   * The prompt is shown in the chat immediately, before the CLI echoes it.
+   */
   const start = useCallback(async () => {
     if (!prompt.trim() || busy) return;
     setBusy("start");
@@ -1202,6 +1216,11 @@ export function Run() {
     slashCommands,
   ]);
 
+  /**
+   * Attach the chat view to an existing run, loading its buffered envelopes. For a resumed run the
+   * spawner only has output since the resume, so when the session's transcript on disk has more
+   * messages, the transcript is used instead to show the full conversation.
+   */
   const attachToRun = useCallback(
     async (id: string) => {
       if (busy) return;
@@ -1336,6 +1355,7 @@ export function Run() {
     void start();
   }, [binaryStatus, prompt, cwd, busy, handle, start]);
 
+  /** Send the follow-up message to the running process, expanding slash commands first. */
   const send = useCallback(async () => {
     if (!handle || !followUp.trim() || busy) return;
     setBusy("send");
@@ -1354,6 +1374,7 @@ export function Run() {
     }
   }, [handle, followUp, busy, t, slashCommands]);
 
+  /** Kill the running process. */
   const stop = useCallback(async () => {
     if (!handle || busy) return;
     setBusy("stop");
@@ -1368,6 +1389,7 @@ export function Run() {
     }
   }, [handle, busy, t]);
 
+  /** Leave the current run and return to an empty new-run form. */
   const newRun = useCallback(() => {
     setHandle(null);
     setEnvelopes([]);
@@ -1542,6 +1564,7 @@ function LimitationsBanner() {
     }
   });
   const [expanded, setExpanded] = useState(false);
+  /** Store the minimized state and apply it; storage failures are ignored. */
   const persistMinimized = (v: boolean) => {
     try {
       localStorage.setItem(LIMITATIONS_MINIMIZED_KEY, v ? "1" : "0");
@@ -1551,6 +1574,7 @@ function LimitationsBanner() {
     setMinimized(v);
   };
   const minimize = () => persistMinimized(true);
+  /** Show the full banner again, collapsed to its summary. */
   const restore = () => {
     persistMinimized(false);
     setExpanded(false);
@@ -1739,6 +1763,10 @@ function computeTokens(envelopes: Envelope[]): TokenStats {
   let outputAuthoritativeForCurrent = false;
   let streamingChars = 0;
 
+  /**
+   * Close out the current turn: add its output tokens to the completed total and reset the per-turn
+   * counters.
+   */
   const commitTurn = () => {
     completedOutputTokens += currentTurnOutput;
     currentTurnOutput = 0;
@@ -2270,6 +2298,10 @@ function PromptEditor({
     if (active >= items.length) setActive(Math.max(0, items.length - 1));
   }, [items.length, active]);
 
+  /**
+   * Replace the trigger token with the chosen suggestion (`/name` or `@path`), adding a space after
+   * it unless one already follows, then put the caret after it.
+   */
   const insertChoice = (choice: SlashCommand | string) => {
     if (!state || !taRef.current) return;
     const ta = taRef.current;
@@ -2294,6 +2326,10 @@ function PromptEditor({
     });
   };
 
+  /**
+   * Keyboard handling: with suggestions open, arrows move the selection, Enter or Tab accepts, and
+   * Escape closes; otherwise Cmd/Ctrl+Enter submits.
+   */
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (state && items.length > 0) {
       if (e.key === "ArrowDown") {
@@ -2330,6 +2366,7 @@ function PromptEditor({
     }
   };
 
+  /** Report the edit and re-detect whether the caret is in an autocomplete trigger. */
   const onTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
     const ta = e.target;
@@ -2338,6 +2375,7 @@ function PromptEditor({
     if (!next) setActive(0);
   };
 
+  /** Re-detect the autocomplete trigger when the caret moves without typing. */
   const onSelect = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const ta = e.currentTarget;
     const next = detectAutocomplete(ta.value, ta.selectionStart || 0);
@@ -2442,16 +2480,27 @@ function Header({
   onViewFromHistory,
   onRefresh,
 }: {
+  /** Provider currently selected. */
   provider: RunProvider;
+  /** Disable the provider toggle, while a run is attached. */
   providerLocked: boolean;
+  /** Switches provider. */
   onProviderChange: (provider: RunProvider) => void;
+  /** Live run list, for the runs switcher badge. */
   activeRuns: RunListResponse | null;
+  /** Id of the run shown in the chat, or null. */
   currentHandleId: string | null;
+  /** Attaches to a live run. */
   onAttach: (id: string) => void;
+  /** Live WebSocket state. */
   wsConnected: boolean;
+  /** Persisted run history. */
   runHistory: DashboardRunHistoryItem[];
+  /** Resumes a past run. */
   onResumeFromHistory: (item: DashboardRunHistoryItem) => void;
+  /** Views a past headless run read-only. */
   onViewFromHistory: (item: DashboardRunHistoryItem) => void;
+  /** Refreshes the run list and history. */
   onRefresh: () => void;
 }) {
   const { t } = useTranslation("run");
@@ -2505,8 +2554,11 @@ function RunProviderToggle({
   disabled,
   onChange,
 }: {
+  /** Selected provider. */
   value: RunProvider;
+  /** Disables both options. */
   disabled: boolean;
+  /** Called with the chosen provider. */
   onChange: (provider: RunProvider) => void;
 }) {
   const { t } = useTranslation("run");
@@ -2541,7 +2593,9 @@ function ProviderChooser({
   onChoose,
   onCancel,
 }: {
+  /** Called with the chosen provider. */
   onChoose: (provider: RunProvider) => void;
+  /** Called when the dialog is dismissed without choosing. */
   onCancel: () => void;
 }) {
   const { t } = useTranslation("run");
@@ -2667,12 +2721,19 @@ function ActiveRunsSwitcher({
   onViewFromHistory,
   onRefresh,
 }: {
+  /** Live run list. */
   activeRuns: RunListResponse | null;
+  /** Id of the run shown in the chat, or null. */
   currentHandleId: string | null;
+  /** Attaches to a live run. */
   onAttach: (id: string) => void;
+  /** Persisted run history. */
   runHistory: DashboardRunHistoryItem[];
+  /** Resumes a past run. */
   onResumeFromHistory: (item: DashboardRunHistoryItem) => void;
+  /** Views a past headless run read-only. */
   onViewFromHistory: (item: DashboardRunHistoryItem) => void;
+  /** Refreshes the run list and history. */
   onRefresh: () => void;
 }) {
   const { t } = useTranslation("run");
@@ -2805,13 +2866,21 @@ function RunsModal({
   onClose,
   onRefresh,
 }: {
+  /** Merged live and historical runs, newest first. */
   rows: UnifiedRunRow[];
+  /** Id of the run shown in the chat, or null. */
   currentHandleId: string | null;
+  /** Attaches to a live run. */
   onAttach: (id: string) => void;
+  /** Resumes a past run. */
   onResume: (item: DashboardRunHistoryItem) => void;
+  /** Views a past headless run read-only. */
   onView: (item: DashboardRunHistoryItem) => void;
+  /** Persisted run history, used to look up a row's history item. */
   runHistory: DashboardRunHistoryItem[];
+  /** Closes the modal. */
   onClose: () => void;
+  /** Refreshes the run list and history. */
   onRefresh: () => void;
 }) {
   const { t } = useTranslation("run");
@@ -2830,6 +2899,7 @@ function RunsModal({
     return () => clearInterval(tick);
   }, [onRefresh]);
 
+  /** Run counts per status and per mode, shown on the filter chips. */
   const counts = useMemo(() => {
     const byStatus: Record<string, number> = { all: rows.length };
     const byMode: Record<string, number> = { all: rows.length };
@@ -2840,6 +2910,10 @@ function RunsModal({
     return { byStatus, byMode };
   }, [rows]);
 
+  /**
+   * Rows matching the status and mode filters and the search text (prompt, working directory,
+   * session, or model).
+   */
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -2852,6 +2926,7 @@ function RunsModal({
     });
   }, [rows, statusFilter, modeFilter, search]);
 
+  /** History items by run id, for the Resume and View actions. */
   const historyById = useMemo(() => {
     const m = new Map<string, DashboardRunHistoryItem>();
     for (const h of runHistory) m.set(h.id, h);
@@ -3022,9 +3097,13 @@ function FilterChipGroup<T extends string>({
   options,
   onChange,
 }: {
+  /** Group label. */
   label: string;
+  /** Selected value. */
   value: T;
+  /** Options with their labels and match counts. */
   options: { value: T; label: string; count: number }[];
+  /** Called with the chosen value. */
   onChange: (v: T) => void;
 }) {
   return (
@@ -3068,10 +3147,15 @@ function UnifiedRunRowView({
   onResume,
   onView,
 }: {
+  /** Run to show. */
   row: UnifiedRunRow;
+  /** Whether this run is the one shown in the chat. */
   isCurrent: boolean;
+  /** Attaches to the run. */
   onAttach: () => void;
+  /** Resumes the run. */
   onResume: () => void;
+  /** Views the run read-only. */
   onView: () => void;
 }) {
   const { t } = useTranslation("run");
@@ -3532,9 +3616,13 @@ function ModeOption({
   hint,
   onClick,
 }: {
+  /** Whether this mode is selected. */
   active: boolean;
+  /** Mode name. */
   label: string;
+  /** One-line explanation. */
   hint: string;
+  /** Selects the mode. */
   onClick: () => void;
 }) {
   return (
@@ -3577,9 +3665,13 @@ function CwdAutocomplete({
   onChange,
   suggestions,
 }: {
+  /** Provider the directory is for. */
   provider: RunProvider;
+  /** Directory path as typed. */
   value: string;
+  /** Called with the new path. */
   onChange: (s: string) => void;
+  /** Suggested directories. */
   suggestions: CwdSuggestion[];
 }) {
   const { t } = useTranslation("run");
@@ -3599,6 +3691,7 @@ function CwdAutocomplete({
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
+  /** Suggestions whose path or label contains the typed text. */
   const filtered = useMemo(() => {
     const q = value.toLowerCase().trim();
     const out = suggestions.filter(
@@ -3624,12 +3717,17 @@ function CwdAutocomplete({
     if (active >= flat.length) setActive(Math.max(0, flat.length - 1));
   }, [flat.length, active]);
 
+  /** Use a suggestion, close the dropdown, and blur the input. */
   const choose = (s: CwdSuggestion) => {
     onChange(s.path);
     setOpen(false);
     inputRef.current?.blur();
   };
 
+  /**
+   * Keyboard handling: arrows open the dropdown and move the selection, Enter picks the highlighted
+   * suggestion, and Escape closes.
+   */
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
       setOpen(true);
@@ -3739,8 +3837,11 @@ function SessionPicker({
   selected,
   onSelect,
 }: {
+  /** Provider whose sessions are listed. */
   provider: RunProvider;
+  /** Chosen session, or null. */
   selected: Session | null;
+  /** Called with the chosen session, or null when cleared. */
   onSelect: (s: Session | null) => void;
 }) {
   const { t } = useTranslation("run");
@@ -3773,6 +3874,7 @@ function SessionPicker({
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
+  /** Sessions whose id, working directory, or status contains the search text. */
   const filtered = useMemo(() => {
     if (!sessions) return [];
     const q = query.toLowerCase().trim();
@@ -3904,10 +4006,15 @@ function ModelPicker({
   models,
   loading,
 }: {
+  /** Provider whose models are listed. */
   provider: RunProvider;
+  /** Selected model id; empty for the CLI default. */
   value: string;
+  /** Called with the new model id. */
   onChange: (s: string) => void;
+  /** Models to offer. */
   models: ModelChoice[];
+  /** True while the model list loads. */
   loading: boolean;
 }) {
   const { t } = useTranslation("run");
@@ -3935,6 +4042,10 @@ function ModelPicker({
     [models, t]
   );
 
+  /**
+   * Handle a dropdown choice: the custom option reveals the free-text input; any other option
+   * selects that model.
+   */
   const onSelect = (v: string) => {
     if (v === MODEL_CUSTOM) {
       setShowCustom(true);
@@ -4029,6 +4140,7 @@ function RunSession(props: RunSessionProps) {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    /** Track whether the user is within 80px of the bottom of the transcript. */
     const onScroll = () => {
       const distance = el.scrollHeight - (el.scrollTop + el.clientHeight);
       setPinnedToBottom(distance < 80);
@@ -4045,14 +4157,17 @@ function RunSession(props: RunSessionProps) {
     el.scrollTop = el.scrollHeight;
   }, [props.envelopes.length, pinnedToBottom]);
 
+  /** The run's final `result` envelope, once it has arrived. */
   const result = useMemo(
     () => props.envelopes.find((e) => e.type === "result") as ResultEnvelope | undefined,
     [props.envelopes]
   );
+  /** The run's `system`/`init` envelope, for the toolbar. */
   const init = useMemo(
     () => props.envelopes.find((e) => e.type === "system") as SystemInit | undefined,
     [props.envelopes]
   );
+  /** Token totals for the context meter. */
   const tokenStats = useMemo(() => computeTokens(props.envelopes), [props.envelopes]);
 
   return (
