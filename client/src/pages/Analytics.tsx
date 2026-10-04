@@ -118,9 +118,11 @@ function useTooltip() {
     content: React.ReactNode;
   } | null>(null);
 
+  /** Show the tooltip with the given content at the pointer. */
   const show = (e: React.MouseEvent, content: React.ReactNode) => {
     setTooltip({ x: e.clientX, y: e.clientY, content });
   };
+  /** Move an open tooltip with the pointer. */
   const move = (e: React.MouseEvent) => {
     setTooltip((t) => t && { ...t, x: e.clientX, y: e.clientY });
   };
@@ -177,6 +179,7 @@ function Heatmap({ weeks }: { weeks: Array<Array<{ date: string; count: number }
   const { t, i18n } = useTranslation(["analytics", "common"]);
   const locale = i18n.resolvedLanguage ?? i18n.language;
 
+  /** Localized short month names for the heatmap's month labels. */
   const monthLabels = useMemo(
     () =>
       Array.from({ length: 12 }, (_, month) =>
@@ -185,6 +188,7 @@ function Heatmap({ weeks }: { weeks: Array<Array<{ date: string; count: number }
     [locale]
   );
 
+  /** Localized short weekday names, Sunday first (January 4, 2026 is a Sunday). */
   const dayNames = useMemo(
     () =>
       Array.from({ length: 7 }, (_, day) =>
@@ -329,7 +333,9 @@ function Sparkline({
   data,
   color = "#6366f1",
 }: {
+  /** Daily counts, oldest first. */
   data: Array<{ date: string; count: number }>;
+  /** Line and fill color; defaults to the accent indigo. */
   color?: string;
 }) {
   const { t } = useTranslation("analytics");
@@ -369,7 +375,9 @@ function CostTrendLine({
   data,
   color = "#10b981",
 }: {
+  /** Daily cost in USD, oldest first. */
   data: Array<{ date: string; cost: number }>;
+  /** Line color; defaults to emerald. */
   color?: string;
 }) {
   const { show, move, hide, node } = useTooltip();
@@ -457,10 +465,15 @@ function BarRow({
   color = "bg-accent",
   pct,
 }: {
+  /** Row label. */
   label: string;
+  /** Value shown and used for the bar length. */
   count: number;
+  /** Largest value among the rows, which fills the bar. */
   max: number;
+  /** Tailwind class for the bar color. */
   color?: string;
+  /** Optional percentage shown after the count. */
   pct?: number;
 }) {
   const width = pct !== undefined ? pct : max > 0 ? Math.round((count / max) * 100) : 0;
@@ -489,9 +502,13 @@ function CostBarRow({
   max,
   color = "bg-emerald-400",
 }: {
+  /** Row label. */
   label: string;
+  /** Cost in USD. */
   cost: number;
+  /** Largest cost among the rows, which fills the bar. */
   max: number;
+  /** Tailwind class for the bar color. */
   color?: string;
 }) {
   const width = max > 0 ? Math.max(2, Math.round((cost / max) * 100)) : 0;
@@ -523,7 +540,9 @@ function DonutChart({
   segments,
   formatTotal,
 }: {
+  /** Slices with their labels, values, and colors. */
   segments: Array<{ label: string; value: number; color: string }>;
+  /** Formats the total shown in the middle; defaults to the plain number. */
   formatTotal?: (total: number) => string;
 }) {
   const { t } = useTranslation(["analytics", "common"]);
@@ -624,12 +643,19 @@ function StatPill({
   color = "text-accent",
   loading = false,
 }: {
+  /** Stat name. */
   label: string;
+  /** Formatted value. */
   value: string | number;
+  /** Exact value shown in a tooltip when the displayed value is rounded. */
   raw?: string;
+  /** Optional secondary line. */
   sub?: string;
+  /** Icon component. */
   icon: React.ElementType;
+  /** Tailwind text class for the icon and value. */
   color?: string;
+  /** Show a skeleton instead of the value. */
   loading?: boolean;
 }) {
   return (
@@ -663,7 +689,9 @@ function ChartCardSkeleton({
   className = "",
   bodyH = "h-32",
 }: {
+  /** Extra classes for the card. */
   className?: string;
+  /** Tailwind height class for the chart body placeholder. */
   bodyH?: string;
 }) {
   return (
@@ -728,6 +756,10 @@ export function Analytics() {
   // Global data scope; a change re-runs `load` (api injects the `sources` param).
   const [scope] = useDataScope();
 
+  /**
+   * Load analytics and total cost in parallel. A failed cost request leaves cost empty instead of
+   * failing the whole page.
+   */
   const load = useCallback(async () => {
     try {
       const [result, cost] = await Promise.all([

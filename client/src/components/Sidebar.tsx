@@ -275,6 +275,10 @@ function CollapsedLanguagePicker({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
 
+  /**
+   * Place the language menu next to the collapsed rail's trigger, at most 240px wide, opening
+   * upward or downward to fit and clamped inside the viewport.
+   */
   const positionMenu = useCallback(() => {
     const trigger = triggerRef.current;
     if (!trigger) return;
@@ -300,11 +304,13 @@ function CollapsedLanguagePicker({
     if (!open) return;
 
     positionMenu();
+    /** Close the menu on a press outside both the trigger and the menu. */
     const closeOnOutsidePress = (event: MouseEvent) => {
       const target = event.target as Node;
       if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
       setOpen(false);
     };
+    /** Close the menu on Escape and return focus to the trigger. */
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpen(false);
@@ -324,6 +330,7 @@ function CollapsedLanguagePicker({
     };
   }, [open, positionMenu]);
 
+  /** Pick a language, close the menu, and return focus to the trigger. */
   const chooseLanguage = (language: SupportedLanguage) => {
     onChange(language);
     setOpen(false);
@@ -431,6 +438,10 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
   const recentEventsRef = useRef<Array<{ type: string; at: number }>>([]);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * Recompute whether nav items are hidden above or below, skipping the state update when nothing
+   * changed.
+   */
   const recomputeNavOverflow = useCallback(() => {
     const el = navRef.current;
     if (!el) return;
@@ -456,6 +467,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     };
   }, [recomputeNavOverflow, collapsed]);
 
+  /** Scroll the nav list vertically by `delta` pixels. */
   const scrollNavBy = useCallback((delta: number) => {
     navRef.current?.scrollBy({ top: delta, behavior: "smooth" });
   }, []);
@@ -470,6 +482,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     recentEventsRef.current = stats.recentEvents;
   }, []);
 
+  /** Write the cumulative connection statistics to localStorage. Storage failures are ignored. */
   const persistStats = useCallback(() => {
     try {
       const payload: PersistedStats = {
@@ -485,6 +498,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     }
   }, []);
 
+  /** Persist the statistics at most once every 2 seconds. */
   const schedulePersist = useCallback(() => {
     if (persistTimerRef.current) return;
     persistTimerRef.current = setTimeout(() => {
@@ -496,6 +510,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
   // Flush pending writes when the page is being hidden / unloaded so the very
   // latest events aren't lost to the throttle window.
   useEffect(() => {
+    /** Write any pending statistics immediately, used when the page is hidden or unloaded. */
     const flush = () => {
       if (persistTimerRef.current) {
         clearTimeout(persistTimerRef.current);
@@ -563,6 +578,10 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     }
   }, [wsConnected]);
 
+  /**
+   * Check for updates on request. Clears any earlier dismissal of the update notice first, so it
+   * can show again if this check still finds an update.
+   */
   const onCheckUpdates = async () => {
     if (checking) return;
     setChecking(true);
@@ -593,6 +612,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
   const checkUpdatesRef = useRef(onCheckUpdates);
   checkUpdatesRef.current = onCheckUpdates;
   useEffect(() => {
+    /** Run the update check when the command palette asks for one. */
     const onRequest = () => {
       void checkUpdatesRef.current();
     };
@@ -617,6 +637,7 @@ export function Sidebar({ wsConnected, collapsed, onToggle }: SidebarProps) {
     hint: t(`nav:languageShort.${language}`),
   }));
 
+  /** Switch the UI language, skipping the change when it is already active. */
   const changeLanguage = (language: SupportedLanguage) => {
     if (language !== currentLanguage) {
       i18n.changeLanguage(language);
@@ -984,6 +1005,7 @@ function ConnectionStatusModal({
 
   useEffect(() => {
     if (!open) return;
+    /** Close the modal on Escape. */
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
@@ -991,6 +1013,7 @@ function ConnectionStatusModal({
     return () => window.removeEventListener("keydown", handler);
   }, [open, close]);
 
+  /** WebSocket endpoint for this page's origin, using `wss:` on HTTPS. */
   const wsUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -1177,8 +1200,11 @@ function Section({
   icon: Icon,
   children,
 }: {
+  /** Section heading. */
   title: string;
+  /** Icon shown beside the heading. */
   icon: LucideIcon;
+  /** Section content. */
   children: React.ReactNode;
 }) {
   return (
@@ -1234,9 +1260,13 @@ function TypeBar({
   max,
   total,
 }: {
+  /** Event type. */
   type: string;
+  /** Events of this type. */
   count: number;
+  /** Count of the busiest type, which fills the bar. */
   max: number;
+  /** Events of all types, for the share. */
   total: number;
 }) {
   const widthPct = max > 0 ? Math.max(2, (count / max) * 100) : 0;
@@ -1268,8 +1298,11 @@ function Sparkline({
   connected,
   avgLabel,
 }: {
+  /** Events per second for each of the last 60 seconds, oldest first. */
   buckets: number[];
+  /** Live WebSocket state; the line is drawn muted while disconnected. */
   connected: boolean;
+  /** Localized label for the average rate. */
   avgLabel: string;
 }) {
   const W = 320;
