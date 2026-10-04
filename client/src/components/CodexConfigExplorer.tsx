@@ -89,6 +89,10 @@ import { api } from "../lib/api";
 import type { CodexConfigEditableFile, CodexConfigFile, CodexConfigOverview } from "../lib/api";
 import { eventBus } from "../lib/eventBus";
 
+/**
+ * Tabs of the Codex workspace: an overview, the redacted `config.toml`, and one tab per section of
+ * {@link CodexConfigOverview}.
+ */
 type Tab =
   | "overview"
   | "settings"
@@ -102,8 +106,10 @@ type Tab =
   | "plugins"
   | "instructions";
 
+/** Tabs that have an overview summary tile with a count. */
 type SummaryTab = Exclude<Tab, "overview" | "settings">;
 
+/** Tab bar entries in display order, each with its icon. */
 const TABS: Array<{ id: Tab; icon: typeof Box }> = [
   { id: "overview", icon: Box },
   { id: "settings", icon: FileText },
@@ -118,17 +124,34 @@ const TABS: Array<{ id: Tab; icon: typeof Box }> = [
   { id: "instructions", icon: BookOpen },
 ];
 
+/** File open in the read-only preview modal, and which actions it allows. */
 interface PreviewState {
+  /** Redacted file preview. */
   file: CodexConfigFile;
+  /** Whether the file is on the server's edit allowlist, which shows the Edit button. */
   editable: boolean;
+  /**
+   * Whether the Delete button is offered for this file. `config.toml` itself is never deletable.
+   */
   deletable: boolean;
 }
 
+/** File awaiting delete confirmation. */
 interface DeleteTarget {
+  /** Absolute path of the file to delete. */
   path: string;
+  /** Name shown in the confirmation dialog. */
   label: string;
 }
 
+/**
+ * Codex half of Agent Config. Loads the local Codex home through `api.codexConfig.overview()` and
+ * reloads whenever the server broadcasts `codex_config_changed`. Shows defaults, models, profiles,
+ * MCP servers, projects, skills, hooks, rules, plugins, and instruction files in tabs. Files open
+ * in a redacted read-only preview. Allowlisted files can be edited in full (fetched unredacted only
+ * for editing) or deleted, always with a server-side backup first, and new `--profile` overlays can
+ * be created. Status and errors show as a dismissible notice.
+ */
 export function CodexConfigExplorer() {
   const { t } = useTranslation("ccConfig");
   const [data, setData] = useState<CodexConfigOverview | null>(null);
@@ -428,6 +451,10 @@ export function CodexConfigExplorer() {
   );
 }
 
+/**
+ * Horizontally scrollable tab bar with per-section count badges and scroll arrows that appear only
+ * when tabs overflow in that direction.
+ */
 function CodexTabs({
   current,
   onSelect,
@@ -549,6 +576,11 @@ function CodexTabs({
   );
 }
 
+/**
+ * Body of the selected Codex tab. The overview shows the Codex home, the default model, effort, and
+ * personality, and clickable summary tiles; each section tab lists its items with the actions its
+ * files allow (view, edit, delete) and, on the profiles tab, a button to create a profile.
+ */
 function CodexTab({
   data,
   tab,
@@ -961,6 +993,7 @@ function CodexTab({
   );
 }
 
+/** Accent tones for the Codex overview tiles. */
 type CodexTone =
   | "violet"
   | "sky"
@@ -972,6 +1005,10 @@ type CodexTone =
   | "emerald"
   | "indigo";
 
+/**
+ * Tailwind classes for each {@link CodexTone}: icon background and color, left accent bar, and
+ * hover border.
+ */
 const CODEX_TONES: Record<
   CodexTone,
   { iconBg: string; iconText: string; bar: string; hoverBorder: string }
@@ -1032,6 +1069,7 @@ const CODEX_TONES: Record<
   },
 };
 
+/** Tone of each section's summary tile, so a section keeps the same color everywhere it appears. */
 const CODEX_SUMMARY_TONES: Record<SummaryTab, CodexTone> = {
   models: "violet",
   profiles: "amber",
@@ -1044,6 +1082,7 @@ const CODEX_SUMMARY_TONES: Record<SummaryTab, CodexTone> = {
   instructions: "teal",
 };
 
+/** Overview card showing the resolved Codex home directory. */
 function CodexRootCard({ home, t }: { home: string; t: TFunction }) {
   const tone = CODEX_TONES.sky;
   return (
@@ -1068,6 +1107,10 @@ function CodexRootCard({ home, t }: { home: string; t: TFunction }) {
   );
 }
 
+/**
+ * Overview tile for one `config.toml` default (model, reasoning effort, or personality), showing a
+ * dash when it is unset.
+ */
 function CodexDefaultStat({
   icon: Icon,
   tone,
@@ -1105,6 +1148,7 @@ function CodexDefaultStat({
   );
 }
 
+/** Clickable overview tile with a section's item count; clicking opens that section's tab. */
 function CodexSummaryStat({
   icon: Icon,
   tone,
@@ -1142,6 +1186,9 @@ function CodexSummaryStat({
   );
 }
 
+/**
+ * List of file-backed items (skills, rules, instructions) as {@link FileRow}s, or an empty state.
+ */
 function Rows({
   rows,
   editable = false,
@@ -1181,6 +1228,7 @@ function Rows({
   );
 }
 
+/** One file-backed item: label, path, a short preview, and its file actions. */
 function FileRow({
   label,
   path,
@@ -1231,6 +1279,10 @@ function FileRow({
   );
 }
 
+/**
+ * View, edit, and delete buttons for a file. Edit and delete only appear when allowed, and Edit
+ * shows a spinner while that file is being opened.
+ */
 function FileActions({
   path,
   editable,
@@ -1302,6 +1354,7 @@ function FileActions({
   );
 }
 
+/** Placeholder for a section with nothing configured. */
 function EmptyState({ t }: { t: TFunction }) {
   return (
     <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-gray-500">
@@ -1310,6 +1363,9 @@ function EmptyState({ t }: { t: TFunction }) {
   );
 }
 
+/**
+ * One label/value pair in a profile card, showing a dash when the profile leaves the setting unset.
+ */
 function ProfileSetting({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="min-w-0">
@@ -1386,6 +1442,10 @@ async function copyText(value: string): Promise<boolean> {
   }
 }
 
+/**
+ * Dialog for creating a named `--profile` overlay. The name may use letters, numbers, hyphens, and
+ * underscores and becomes `<name>.config.toml` in the Codex home.
+ */
 function CreateProfileModal({
   name,
   error,
@@ -1480,6 +1540,9 @@ function CreateProfileModal({
   );
 }
 
+/**
+ * Confirmation dialog for deleting a Codex file; notes that a timestamped backup is created first.
+ */
 function DeleteFileModal({
   target,
   error,
@@ -1568,6 +1631,9 @@ function DeleteFileModal({
   );
 }
 
+/**
+ * Read-only modal showing a redacted Codex file, with Edit and Delete when the file allows them.
+ */
 function PreviewModal({
   state,
   error,
@@ -1641,6 +1707,10 @@ function PreviewModal({
   );
 }
 
+/**
+ * Editor modal for an allowlisted Codex file. Warns that Codex reads the file directly and the
+ * dashboard cannot validate its syntax, and that a backup is taken before saving.
+ */
 function EditorModal({
   state,
   error,
@@ -1729,6 +1799,7 @@ function EditorModal({
   );
 }
 
+/** Dismissible success or error banner shown above the Codex workspace. */
 function StatusNotice({
   kind,
   message,
