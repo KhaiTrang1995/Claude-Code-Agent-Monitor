@@ -57,7 +57,9 @@ import { app } from "electron";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+/** Append-mode stream to `desktop.log`, opened lazily on the first write. */
 let stream: fs.WriteStream | null = null;
+/** Path of the log file, set when the stream opens. */
 let logPath = "";
 
 /**

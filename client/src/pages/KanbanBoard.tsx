@@ -142,6 +142,7 @@ export function KanbanBoard() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, number>>({});
 
+  /** Switch boards and reset each column's "show more" pagination. */
   const setView = useCallback(
     (next: BoardView) => {
       setViewState(next);
@@ -150,6 +151,11 @@ export function KanbanBoard() {
     [setViewState]
   );
 
+  /**
+   * Load agents for every board status in parallel (waiting agents include transient rows), merging
+   * duplicates to the freshest row, plus the sessions that main-agent cards need for model, working
+   * directory, and cost.
+   */
   const loadAgents = useCallback(async () => {
     // Fetch every persisted agent status. Bucketing happens below in
     // `groupedAgents`.
@@ -172,6 +178,10 @@ export function KanbanBoard() {
     setSessions(sessionsRes.sessions);
   }, [dataScope]);
 
+  /**
+   * Load sessions for every board status in parallel, up to the server's 10,000-row cap per status,
+   * so each column has its full set; columns paginate on the client.
+   */
   const loadSessions = useCallback(async () => {
     // Each column needs the full set for its status - column-level
     // pagination ("show more") is handled client-side at COLUMN_PAGE_SIZE.
@@ -194,6 +204,10 @@ export function KanbanBoard() {
     setSessions(mergeFreshestById(...results.map((r) => r.sessions)));
   }, [dataScope]);
 
+  /**
+   * Load the data for the board currently shown. Errors are logged and leave the previous cards on
+   * screen.
+   */
   const load = useCallback(async () => {
     try {
       if (view === "agents") await loadAgents();

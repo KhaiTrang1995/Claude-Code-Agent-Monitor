@@ -156,6 +156,10 @@ function ensureNativeModulesPatched(): void {
   log.info("native module redirect installed", { betterSqlite3: desktopBetterSqlite });
 }
 
+/**
+ * Handle to the dashboard server the desktop app uses, whether it started the server or adopted one
+ * already running.
+ */
 export interface ServerHandle {
   /** Origin (e.g. `http://127.0.0.1:4820`) used by the window. */
   url: string;

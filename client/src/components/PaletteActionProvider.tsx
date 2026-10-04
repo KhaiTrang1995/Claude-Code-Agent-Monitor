@@ -103,6 +103,7 @@ import {
 /** A registered action. Returning `false` declines, so the stack falls through. */
 export type PaletteActionHandler = () => void | boolean;
 
+/** What the palette action context provides to pages and to the palette. */
 interface PaletteActionContextValue {
   /** Ids with at least one live handler, so the palette lists only real work. */
   boundIds: ReadonlySet<string>;

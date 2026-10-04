@@ -77,6 +77,7 @@ const MAX_UPLOAD_TOTAL_BYTES = 100 * 1024 * 1024;
  */
 const MAX_BINARY_RESPONSE_BYTES = 10 * 1024 * 1024;
 
+/** Per-request options for the dashboard API client. */
 interface RequestOptions {
   /** Query params; `undefined`/`null` values are omitted, not stringified. */
   query?: Record<string, string | number | boolean | Array<string | number | boolean> | undefined>;

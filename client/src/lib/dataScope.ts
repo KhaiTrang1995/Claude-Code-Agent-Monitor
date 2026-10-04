@@ -153,8 +153,10 @@ function load(): DataScope {
   }
 }
 
-// The single source of truth for this tab. Replaced wholesale on every change so
-// useSyncExternalStore's getSnapshot returns a stable reference between changes.
+/**
+ * The single source of truth for this tab's scope. It is replaced wholesale on every change so
+ * `useSyncExternalStore`'s snapshot stays referentially stable between changes.
+ */
 let current: DataScope = load();
 /** Subscribers notified when the scope changes. */
 const listeners = new Set<() => void>();

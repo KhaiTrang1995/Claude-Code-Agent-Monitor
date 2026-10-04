@@ -563,6 +563,10 @@ function SessionSelector({ onSelectSession }: SessionSelectorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Fetch one page of sessions for the dropdown, replacing or appending to the list, and note
+   * whether more pages exist.
+   */
   const fetchPage = useCallback((pageOffset: number, replace: boolean) => {
     setLoading(true);
     api.sessions

@@ -648,6 +648,10 @@ export function AgentCollaborationNetwork({
     );
   }
 
+  /**
+   * Hide the tooltip when the pointer leaves the chart, in case a node's own leave event was
+   * missed.
+   */
   const handleContainerLeave = () => {
     const tip = tooltipRef.current;
     if (tip) tip.style.opacity = "0";

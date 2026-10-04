@@ -204,6 +204,7 @@ export const COMMAND_GROUP_ORDER: readonly CommandGroup[] = [
   "actions",
 ];
 
+/** One runnable command in the command palette. */
 export interface PaletteCommand {
   /** Stable across renders and locales — it is what the MRU list persists. */
   id: string;

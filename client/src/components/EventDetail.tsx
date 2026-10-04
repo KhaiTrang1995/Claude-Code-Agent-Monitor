@@ -70,6 +70,7 @@ import { formatModelName, formatDateTimeFull } from "../lib/format";
 import { CopyButton } from "./event-views/primitives";
 import { ToolInputView, ToolResponseView } from "./event-views/tool-views";
 
+/** Props for {@link EventDetail}. */
 type EventDetailProps = {
   /** Event to show. */
   event: DashboardEvent;

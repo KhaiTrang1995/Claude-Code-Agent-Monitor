@@ -403,6 +403,10 @@ export function WorkflowPatterns({ data, onPatternClick }: WorkflowPatternsProps
   const { t } = useTranslation("workflows");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  /**
+   * Expand a pattern, or collapse it when it is already expanded. Expanding also reports its steps
+   * to the page.
+   */
   const handlePatternClick = (index: number, steps: string[]) => {
     const next = selectedIndex === index ? null : index;
     setSelectedIndex(next);

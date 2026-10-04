@@ -408,6 +408,7 @@ export function unlockSound(): void {
 export function installSoundUnlock(): () => void {
   if (typeof window === "undefined") return () => {};
   const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "touchstart"];
+  /** Unlock audio on the first user gesture, then stop listening. */
   const handler = () => {
     unlockSound();
     events.forEach((e) => window.removeEventListener(e, handler));

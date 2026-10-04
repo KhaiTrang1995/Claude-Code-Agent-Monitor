@@ -53,11 +53,16 @@
  * ----------------------------------------------------------------------------- */
 
 interface Identified {
+  /** Row id used to match rows across responses. */
   id: string;
   /** Row mutation time — bumped exactly when status and metadata change. */
   updated_at?: string;
   /** Latest durable provider event for the row; unchanged by a status flip. */
   last_activity?: string;
+  /**
+   * Start time; the last fallback for freshness when neither `updated_at` nor `last_activity` is
+   * set.
+   */
   started_at?: string;
 }
 

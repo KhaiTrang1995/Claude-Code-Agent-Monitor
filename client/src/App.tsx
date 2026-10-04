@@ -111,6 +111,7 @@ function DashboardOnboarding() {
  * @returns Routed dashboard UI inside `BrowserRouter`.
  */
 export default function App() {
+  /** Forward every WebSocket message to the app-wide event bus. */
   const onMessage = useCallback((msg: WSMessage) => {
     eventBus.publish(msg);
   }, []);
