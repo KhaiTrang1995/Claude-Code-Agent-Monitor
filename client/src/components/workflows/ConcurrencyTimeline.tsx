@@ -224,6 +224,7 @@ function buildLaneTooltip(
   subtitle.textContent = t("concurrency.tooltip.lane");
   el.appendChild(subtitle);
 
+  /** Append a label/value row to the tooltip. */
   const addRow = (label: string, value: string) => {
     const row = document.createElement("div");
     row.style.cssText =
@@ -298,11 +299,13 @@ export function ConcurrencyTimeline({ data }: ConcurrencyTimelineProps) {
   const tipRef = useRef<HTMLDivElement>(null);
   const lanes = data.aggregateLanes;
 
+  /** Hide the tooltip. */
   const hideTip = useCallback(() => {
     const tip = tipRef.current;
     if (tip) tip.style.opacity = "0";
   }, []);
 
+  /** Fill the tooltip for a lane and anchor it next to the row, kept inside the container. */
   const showTip = useCallback(
     (lane: ConcurrencyLane, color: string, anchor: HTMLElement) => {
       const tip = tipRef.current;

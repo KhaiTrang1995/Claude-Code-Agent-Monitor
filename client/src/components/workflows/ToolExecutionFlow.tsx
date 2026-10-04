@@ -282,10 +282,12 @@ export function ToolExecutionFlow({
 
   const totalUsage = data.toolCounts.reduce((s, c) => s + c.count, 0);
 
+  /** Hide the tooltip. */
   const hideTip = useCallback(() => {
     const tip = tipRef.current;
     if (tip) tip.style.opacity = "0";
   }, []);
+  /** Localized name for the built-in tools; other tool names are shown as-is. */
   const localizeToolLabel = useCallback(
     (name: string) => {
       const lower = name.toLowerCase();
@@ -306,6 +308,10 @@ export function ToolExecutionFlow({
     [t]
   );
 
+  /**
+   * Fill the tooltip for a node or link and anchor it next to the hovered element, kept inside the
+   * container.
+   */
   const showTip = useCallback(
     (payload: TipPayload, anchorEl: SVGGraphicsElement) => {
       const tip = tipRef.current;

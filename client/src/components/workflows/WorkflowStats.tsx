@@ -243,6 +243,10 @@ function InfoPopover({ calculationKey, interp, valueDisplay, metricPhraseKey }: 
 
   useLayoutEffect(() => {
     if (!open) return;
+    /**
+     * Place the popover next to its button, flipping above when there is no room below, and keep it
+     * inside the viewport.
+     */
     const update = () => {
       const btn = buttonRef.current;
       const pop = popoverRef.current;
@@ -274,6 +278,7 @@ function InfoPopover({ calculationKey, interp, valueDisplay, metricPhraseKey }: 
 
   useEffect(() => {
     if (!open) return;
+    /** Close the popover on Escape. */
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };

@@ -64,8 +64,11 @@ import type { TranscriptContent } from "../../lib/types";
 import { CodeBlock } from "./CodeBlock";
 import { styleForTool } from "./toolStyle";
 
+/** Props for {@link ToolCallBlock}. */
 interface ToolCallBlockProps {
+  /** The tool call from the transcript. */
   toolUse: TranscriptContent;
+  /** The matching tool result, or null while it has not arrived. */
   toolResult?: TranscriptContent | null;
 }
 
@@ -269,6 +272,10 @@ function renderResult(toolResult: TranscriptContent, toolName: string) {
   return <CodeBlock code={text} lang={lang} label={label} tone={isError ? "danger" : "default"} />;
 }
 
+/**
+ * Collapsible card for one tool call in a transcript: tool icon and name, a one-line summary, and
+ * the result status. Expanding shows the full input and result. Errors use a red style.
+ */
 export function ToolCallBlock({ toolUse, toolResult }: ToolCallBlockProps) {
   const [expanded, setExpanded] = useState(false);
 

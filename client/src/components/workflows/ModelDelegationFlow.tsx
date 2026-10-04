@@ -384,11 +384,13 @@ export function ModelDelegationFlow({ data }: ModelDelegationFlowProps) {
   const hasData = data.mainModels.length > 0 || data.subagentModels.length > 0;
   const totalAgents = countTotalAgents(data);
 
+  /** Hide the tooltip. */
   const hideTip = useCallback(() => {
     const tip = tipRef.current;
     if (tip) tip.style.opacity = "0";
   }, []);
 
+  /** Fill the tooltip for a model and anchor it next to its box, kept inside the container. */
   const showTip = useCallback(
     (node: NodeDatum, anchor: SVGGraphicsElement) => {
       const tip = tipRef.current;
@@ -581,6 +583,7 @@ function buildModelDelegationTooltip(
   subtitle.textContent = `${sideLabel} · ${node.family}`;
   el.appendChild(subtitle);
 
+  /** Append a label/value row to the tooltip. */
   const addRow = (label: string, value: string) => {
     const row = document.createElement("div");
     row.style.cssText =

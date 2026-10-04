@@ -68,8 +68,10 @@
 
 import type { Mood, TabbyPulse } from "./brain";
 
+/** What a quip responds to: an event pulse or a mood. */
 export type QuipKey = NonNullable<TabbyPulse> | Mood;
 
+/** Lines Tabby can say for each pulse and mood; one is picked at random. */
 const QUIPS: Record<QuipKey, string[]> = {
   // Pulses (event-driven, transient bubbles)
   session_done: [
@@ -138,4 +140,5 @@ export function pickQuip(key: QuipKey, rand: () => number = Math.random): string
   return pool[i] ?? "";
 }
 
+/** Every quip key, used by tests to check each one has lines. */
 export const ALL_QUIP_KEYS = Object.keys(QUIPS) as QuipKey[];

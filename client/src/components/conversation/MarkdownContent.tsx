@@ -292,12 +292,14 @@ function renderInline(text: string, baseKey = ""): React.ReactNode[] {
   let i = 0;
   let buf = "";
   let n = 0;
+  /** Emit pending plain text as a node. */
   const flush = () => {
     if (buf) {
       out.push(buf);
       buf = "";
     }
   };
+  /** Emit a formatted node, flushing pending text first. */
   const push = (node: React.ReactNode) => {
     flush();
     out.push(<React.Fragment key={`${baseKey}-${n++}`}>{node}</React.Fragment>);
@@ -502,6 +504,7 @@ export function MarkdownContent({ text, dense = false }: MarkdownContentProps) {
             );
 
           case "table": {
+            /** Text alignment class for a table column. */
             const alignClass = (a: "left" | "center" | "right" | null) =>
               a === "center" ? "text-center" : a === "right" ? "text-right" : "text-left";
             return (

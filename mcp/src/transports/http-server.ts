@@ -71,13 +71,23 @@ import * as c from "../ui/colors.js";
  * which protocol it speaks, so a request for a known session id can be
  * rejected if it mismatches the protocol that session was initialized with. */
 interface TransportEntry {
+  /** The session's transport. */
   transport: Transport;
+  /** Which protocol the session uses: the streamable HTTP transport or the legacy SSE transport. */
   type: "streamable" | "sse";
   /** `Date.now()` of the last request routed to this session, used by the
    * idle reaper. Refreshed by the `/mcp` and `/messages` handlers. */
   lastActivityMs: number;
 }
 
+/**
+ * Compare a provided bearer token with the expected one in constant time, so response timing does
+ * not leak how much of the token matched.
+ *
+ * @param provided - Token from the request, if any.
+ * @param expected - Configured token.
+ * @returns True when they match.
+ */
 function tokensMatch(provided: string | undefined, expected: string): boolean {
   if (!provided) return false;
   const providedBuffer = Buffer.from(provided);

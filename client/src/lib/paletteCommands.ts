@@ -542,7 +542,9 @@ const PROVIDER_SCOPES: ProviderScope[] = ["both", "claude", "codex"];
  */
 export function buildPaletteCommands(ctx: PaletteContext): PaletteCommand[] {
   const { t, navigate } = ctx;
+  /** Command handler that navigates to a route. */
   const go = (to: string) => () => navigate(to);
+  /** Localized on/off state pill for toggle commands. */
   const onOff = (enabled: boolean) => t(enabled ? "nav:palette.on" : "nav:palette.off");
 
   const pages: PaletteCommand[] = PAGE_COMMANDS.map((page) => ({
