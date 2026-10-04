@@ -453,6 +453,10 @@ function buildGraph(
   const edgeSet = new Set<string>();
   const rawEdges: DAGEdge[] = [];
 
+  /**
+   * Add an edge once per source and target pair, resolving both nodes; edges to unknown nodes are
+   * skipped.
+   */
   const addEdge = (source: string, target: string, weight: number) => {
     const key = `${source}→${target}`;
     if (edgeSet.has(key)) return;
@@ -560,6 +564,10 @@ export function OrchestrationDAG({ data, onNodeClick, selectedNode }: Orchestrat
     if (tip) tip.style.opacity = "0";
   }, []);
 
+  /**
+   * Fill the tooltip for a node and anchor it above the node, flipping below when there is no room
+   * and clamping it inside the viewport.
+   */
   const showTipForNode = useCallback(
     (node: DAGNode, anchorEl: SVGGElement) => {
       const tip = tipRef.current;
@@ -602,8 +610,10 @@ export function OrchestrationDAG({ data, onNodeClick, selectedNode }: Orchestrat
     t("orchestration.layers.outcomes"),
   ];
 
+  /** Laid-out graph for the current data. */
   const graph = useMemo(() => buildGraph(data, t), [data, t]);
 
+  /** Report a node click with the node's id. */
   const handleNodeClick = useCallback(
     (node: DAGNode) => {
       onNodeClick?.(node.id);

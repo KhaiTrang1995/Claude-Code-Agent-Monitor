@@ -297,6 +297,11 @@ export function WorkflowRunsPanel({
   const [transcripts, setTranscripts] = useState<Record<string, AgentTranscriptState>>({});
   const inflightRef = useRef<Set<string>>(new Set());
 
+  /**
+   * Fetch one agent's full transcript and extract its prompt and result. Skips duplicates while a
+   * request for the same key is in flight; failures mark the row so it falls back to the journal
+   * preview.
+   */
   const loadTranscript = useCallback(
     async (sessionId: string, runId: string, agentId: string, key: string) => {
       if (inflightRef.current.has(key)) return;
@@ -317,6 +322,7 @@ export function WorkflowRunsPanel({
     []
   );
 
+  /** Fetch runs for the status filter and session. Skipped in controlled mode. */
   const fetchRuns = useCallback(async () => {
     if (controlled) return;
     try {
@@ -344,6 +350,10 @@ export function WorkflowRunsPanel({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (controlled) return;
+    /**
+     * Refetch 1.5 seconds after the last `workflow_upserted` message, so a burst of journal writes
+     * triggers one reload.
+     */
     const handler = (msg: WSMessage) => {
       if (msg.type !== "workflow_upserted") return;
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -358,6 +368,7 @@ export function WorkflowRunsPanel({
 
   const runs = controlled ? controlledRuns : fetchedRuns;
 
+  /** Expand or collapse a run. */
   const toggle = (runId: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -365,8 +376,10 @@ export function WorkflowRunsPanel({
       else next.add(runId);
       return next;
     });
+  /** Filter a run's results by phase; choosing the active phase again clears the filter. */
   const setPhase = (runId: string, phase: string) =>
     setPhaseFilter((prev) => ({ ...prev, [runId]: prev[runId] === phase ? null : phase }));
+  /** Expand or collapse one agent result. */
   const toggleResult = (key: string) =>
     setOpenResults((prev) => {
       const next = new Set(prev);

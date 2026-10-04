@@ -71,14 +71,24 @@ import {
 import type { Session } from "../lib/types";
 import { formatDuration, timeAgo, formatModelName } from "../lib/format";
 
+/** Props for {@link SessionCard}. */
 interface SessionCardProps {
+  /** Session to show. */
   session: Session;
+  /** Click handler; defaults to opening the session's detail page. */
   onClick?: () => void;
   /** `dot` shrinks the status badge to its colored dot where the layout
    *  already shows the status (Kanban columns). Defaults to the full badge. */
   statusDisplay?: "badge" | "dot";
 }
 
+/**
+ * Whether a card is a transient placeholder for a Codex TUI process that has not written a session
+ * id yet. Such cards are not clickable, since there is no session page to open.
+ *
+ * @param metadata - The row's JSON metadata.
+ * @returns True when `pre_identity_process` is set.
+ */
 function isTransientProcessCard(metadata: string | null | undefined): boolean {
   if (!metadata) return false;
   try {
@@ -88,6 +98,13 @@ function isTransientProcessCard(metadata: string | null | undefined): boolean {
   }
 }
 
+/**
+ * Compact cost: two decimals from $1, three from 1 cent, four below that, and `$0` for zero or
+ * invalid values.
+ *
+ * @param cost - Cost in USD.
+ * @returns The formatted cost.
+ */
 function formatCost(cost: number): string {
   if (!Number.isFinite(cost) || cost <= 0) return "$0";
   if (cost >= 1) return `$${cost.toFixed(2)}`;
@@ -111,6 +128,11 @@ function promptPreviewLines(value: string | null | undefined): string[] {
     .slice(-2);
 }
 
+/**
+ * Kanban card for a session: title, a compact status badge (the waiting reason shows in its
+ * tooltip), the latest prompt lines, and session details such as cost. Clicking opens the session,
+ * except for transient Codex placeholders, which have no page yet.
+ */
 export function SessionCard({ session, onClick, statusDisplay = "badge" }: SessionCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation("kanban");
