@@ -164,6 +164,9 @@ type Row = { key: string; label: string; value: unknown };
 export function EventDetail({ event, agentInfoById, sessionNameById }: EventDetailProps) {
   const { t } = useTranslation("common");
 
+  /**
+   * The event's JSON payload as an object, or null when there is none or it is not a JSON object.
+   */
   const parsed = useMemo<Record<string, unknown> | null>(() => {
     if (!event.data) return null;
     try {
@@ -176,8 +179,13 @@ export function EventDetail({ event, agentInfoById, sessionNameById }: EventDeta
     }
   }, [event.data]);
 
+  /** Readable summary of the event. */
   const summary = useMemo(() => buildEventSummary(event), [event]);
 
+  /**
+   * Rows for the detail list: the event id, the full recorded date and time, identifiers with
+   * friendly agent and session names when known, then the payload fields minus duplicates.
+   */
   const rows = useMemo<Row[]>(() => {
     const result: Row[] = [{ key: "event_id", label: t("eventDetail.eventId"), value: event.id }];
     // Full date + time + timezone - list rows only show a short time, so the
@@ -285,8 +293,11 @@ function SummaryBlock({
   hasToolInput,
   hasToolResponse,
 }: {
+  /** Icon, headline, and bullet lines for the event. */
   summary: { icon: string; headline: string; bullets: string[] };
+  /** Whether the tool input is shown below, which the summary mentions. */
   hasToolInput: boolean;
+  /** Whether the tool response is shown below, which the summary mentions. */
   hasToolResponse: boolean;
 }) {
   const { t } = useTranslation("common");
@@ -343,8 +354,11 @@ function FieldRow({
   /** Raw payload key - used for tool-aware routing decisions so the renderer
    *  doesn't break when the user-visible label is translated. */
   rowKey: string;
+  /** Display label. */
   label: string;
+  /** Field value. */
   value: unknown;
+  /** Tool the event belongs to, used to pick tool-aware views; null for non-tool events. */
   toolName: string | null;
 }) {
   // Route tool_input / tool_response through tool-aware renderers when the

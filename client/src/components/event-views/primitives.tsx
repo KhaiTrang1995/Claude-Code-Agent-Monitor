@@ -180,9 +180,13 @@ export function TerminalOutput({
   interrupted,
   exitCode,
 }: {
+  /** Captured standard output. */
   stdout?: string;
+  /** Captured standard error. */
   stderr?: string;
+  /** Whether the command was interrupted. */
   interrupted?: boolean;
+  /** Exit code, when known. */
   exitCode?: number;
 }) {
   const hasStdout = typeof stdout === "string" && stdout.length > 0;
@@ -218,8 +222,11 @@ function OutputBlock({
   text,
   variant,
 }: {
+  /** Section label, such as stdout. */
   label: string;
+  /** Output text. */
   text: string;
+  /** `err` tints the block red. */
   variant: "out" | "err";
 }) {
   const color = variant === "err" ? "text-red-300" : "text-gray-200";
@@ -252,9 +259,13 @@ export function LineNumberedCode({
   startLine = 1,
   label,
 }: {
+  /** Code to show. */
   text: string;
+  /** CSS max height before the block scrolls; defaults to `24rem`. */
   maxHeight?: string;
+  /** Number of the first line, for excerpts; defaults to 1. */
   startLine?: number;
+  /** Optional caption, such as the file path. */
   label?: string;
 }) {
   const lines = text.split(/\r?\n/);
@@ -379,7 +390,9 @@ export function KeyValueCard({
   data,
   priority = [],
 }: {
+  /** Object to show. */
   data: Record<string, unknown>;
+  /** Keys to list first, in this order. */
   priority?: string[];
 }) {
   const entries = Object.entries(data);

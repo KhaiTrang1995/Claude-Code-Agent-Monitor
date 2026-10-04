@@ -131,8 +131,11 @@ import { MarkdownContent } from "./MarkdownContent";
 import { fmt, formatModelName } from "../../lib/format";
 import { parseTuiSegments, stripAnsi, hasTuiTags, type TuiSegment } from "./tuiSegments";
 
+/** Props for {@link MessageList}. */
 interface MessageListProps {
+  /** Transcript messages, oldest first. */
   messages: TranscriptMessage[];
+  /** Show the loading state instead of the list. */
   loading: boolean;
 }
 
@@ -307,11 +310,17 @@ function CollapsibleBlock({
   bgClass,
   textClass,
 }: {
+  /** Text inside the block. */
   text: string;
+  /** Icon shown in the header. */
   icon: React.ReactNode;
+  /** Header title. */
   title: string;
+  /** Border color class. */
   borderClass: string;
+  /** Background color class. */
   bgClass: string;
+  /** Text color class. */
   textClass: string;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -341,6 +350,11 @@ function CollapsibleBlock({
   );
 }
 
+/**
+ * Renders a transcript as chat turns: user prompts, assistant text, collapsible thinking blocks,
+ * tool calls with their results, and system notices. Thinking blocks start collapsed and are
+ * tracked by message index.
+ */
 export function MessageList({ messages, loading }: MessageListProps) {
   const [expandedThinking, setExpandedThinking] = useState<Set<number>>(() => new Set());
 
