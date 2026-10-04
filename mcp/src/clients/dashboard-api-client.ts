@@ -65,9 +65,16 @@ import path from "node:path";
 import type { AppConfig } from "../config/app-config.js";
 import { Logger } from "../core/logger.js";
 
+/** HTTP methods the client issues. */
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+/** Largest single file accepted for an import upload (50 MiB), checked before anything is sent. */
 const MAX_UPLOAD_FILE_BYTES = 50 * 1024 * 1024;
+/** Largest total size accepted for one import upload (100 MiB). */
 const MAX_UPLOAD_TOTAL_BYTES = 100 * 1024 * 1024;
+/**
+ * Largest binary response, such as a transcript image, read into memory (10 MiB). Checked against
+ * `Content-Length` and again while streaming.
+ */
 const MAX_BINARY_RESPONSE_BYTES = 10 * 1024 * 1024;
 
 interface RequestOptions {
@@ -79,9 +86,13 @@ interface RequestOptions {
   idempotent?: boolean;
 }
 
+/** Optional fields for constructing an {@link ApiError}. */
 interface ApiErrorOptions {
+  /** HTTP status, when the request reached the server. */
   status?: number;
+  /** Machine-readable error code. */
   code?: string;
+  /** Extra structured details from the server's error body. */
   details?: unknown;
 }
 
@@ -92,11 +103,13 @@ interface ApiErrorOptions {
  * instead of collapsing to a generic internal error.
  */
 export class ApiError extends Error {
+  /** HTTP status, when the request reached the server. */
   status?: number;
   /** Forwarded from the dashboard's error envelope, a synthesized
    * `HTTP_<status>`, or this client's own code (`INVALID_PATH`, `TIMEOUT`,
    * `REQUEST_FAILED`, `UNREACHABLE_STATE`). */
   code?: string;
+  /** Extra structured details from the server's error body, if any. */
   details?: unknown;
 
   constructor(message: string, options: ApiErrorOptions = {}) {

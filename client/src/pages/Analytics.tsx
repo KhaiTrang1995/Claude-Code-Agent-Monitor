@@ -85,6 +85,10 @@ import type { Analytics as AnalyticsData, CostResult } from "../lib/types";
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
 
+/**
+ * Fixed-position chart tooltip that follows the pointer and flips to the left near the right edge
+ * of the window.
+ */
 function ChartTooltip({ x, y, children }: { x: number; y: number; children: React.ReactNode }) {
   const nearRight = x > window.innerWidth - 200;
   return (
@@ -101,6 +105,12 @@ function ChartTooltip({ x, y, children }: { x: number; y: number; children: Reac
   );
 }
 
+/**
+ * Small hook managing one chart tooltip: `show`, `move`, and `hide` handlers plus the tooltip
+ * element to render.
+ *
+ * @returns The handlers and the tooltip node.
+ */
 function useTooltip() {
   const [tooltip, setTooltip] = useState<{
     x: number;
@@ -127,6 +137,14 @@ function useTooltip() {
 
 // ── Heatmap ──────────────────────────────────────────────────────────────────
 
+/**
+ * Fill color for a heatmap cell. Uses a log scale, so a few very busy days do not wash out the
+ * rest, interpolated across an indigo-to-lavender ramp; empty days get a fixed dark color.
+ *
+ * @param count - Events on the day.
+ * @param max - Busiest day's count.
+ * @returns A CSS color.
+ */
 function cellColor(count: number, max: number) {
   if (count === 0) return "#161625";
   // Log scale + RGB interpolation across a wide color ramp for maximum perceptual range
@@ -150,6 +168,10 @@ function cellColor(count: number, max: number) {
   return `rgb(${r},${g},${b})`;
 }
 
+/**
+ * GitHub-style activity heatmap: one column per week and one row per weekday, with localized month
+ * and weekday labels and a tooltip per day.
+ */
 function Heatmap({ weeks }: { weeks: Array<Array<{ date: string; count: number }>> }) {
   const { show, move, hide, node } = useTooltip();
   const { t, i18n } = useTranslation(["analytics", "common"]);
@@ -302,6 +324,7 @@ function Heatmap({ weeks }: { weeks: Array<Array<{ date: string; count: number }
 
 // ── Sparkline bar chart ───────────────────────────────────────────────────────
 
+/** Small area sparkline of daily counts. */
 function Sparkline({
   data,
   color = "#6366f1",
@@ -341,6 +364,7 @@ function Sparkline({
   );
 }
 
+/** Line chart of daily cost, with a hover tooltip per day. */
 function CostTrendLine({
   data,
   color = "#10b981",
@@ -425,6 +449,7 @@ function CostTrendLine({
 
 // ── Bar row ───────────────────────────────────────────────────────────────────
 
+/** Horizontal bar row: label, count, an optional percentage, and a bar scaled against `max`. */
 function BarRow({
   label,
   count,
@@ -457,6 +482,7 @@ function BarRow({
   );
 }
 
+/** Horizontal bar row for a cost value, scaled against `max`. */
 function CostBarRow({
   label,
   cost,
@@ -489,6 +515,10 @@ function CostBarRow({
 
 // ── Donut segment via SVG ─────────────────────────────────────────────────────
 
+/**
+ * Donut chart of labelled segments with a legend and the total in the middle; `formatTotal`
+ * controls how the total is printed.
+ */
 function DonutChart({
   segments,
   formatTotal,
@@ -581,6 +611,10 @@ function DonutChart({
 
 // ── StatPill ──────────────────────────────────────────────────────────────────
 
+/**
+ * Headline stat with icon, label, value, an optional secondary line, and an optional raw value
+ * shown on hover.
+ */
 function StatPill({
   label,
   value,
@@ -677,6 +711,11 @@ const ANALYTICS_TAB_LABEL_KEYS: Record<(typeof ANALYTICS_TABS)[number], string> 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
+/**
+ * Analytics page (`/analytics`). Four tabs, mirrored in the URL: cost (spend by model and over
+ * time), tokens, productivity (activity heatmap and tool usage), and workflow. Follows the global
+ * data scope and refreshes every 15 seconds and on live WebSocket updates.
+ */
 export function Analytics() {
   const { t, i18n } = useTranslation("analytics");
   const [data, setData] = useState<AnalyticsData | null>(null);

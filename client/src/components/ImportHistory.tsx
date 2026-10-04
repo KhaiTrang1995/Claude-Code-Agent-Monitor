@@ -91,11 +91,24 @@ import { api, type ImportResult, type ImportBackupResult, type RunProvider } fro
 import { eventBus } from "../lib/eventBus";
 import type { WSMessage, ImportProgressMessage } from "../lib/types";
 
+/**
+ * Import method: rescan the default history folder, scan a folder path, upload files, or restore a
+ * backup export.
+ */
 type Mode = "rescan" | "path" | "upload" | "backup";
 
+/** Shape of the import guide: platform-specific default folders and instructions. */
 type GuideResponse = Awaited<ReturnType<typeof api.import.guide>>;
+/** Progress message streamed over the WebSocket while an import runs. */
 type Progress = ImportProgressMessage;
 
+/**
+ * Guide used when the server's guide cannot be loaded: the provider's default history folder
+ * (`~/.claude/projects` or `~/.codex/sessions`) with generic instructions.
+ *
+ * @param provider - Provider being imported.
+ * @returns A minimal guide.
+ */
 function fallbackGuide(provider: RunProvider): GuideResponse {
   const isCodex = provider === "codex";
   return {
@@ -115,6 +128,13 @@ function fallbackGuide(provider: RunProvider): GuideResponse {
   };
 }
 
+/**
+ * Import History panel in Settings. Imports Claude Code or Codex history by rescanning the default
+ * folder, scanning a chosen folder, or uploading transcript files, and can restore a backup export.
+ * Shows platform-specific guidance, live progress from the WebSocket, and a result summary
+ * (imported, skipped, backfilled, and errors). Imports are idempotent, so rerunning one never
+ * duplicates data.
+ */
 export function ImportHistory() {
   const { t } = useTranslation("settings");
   const [provider, setProvider] = useState<RunProvider>("claude");
@@ -781,6 +801,7 @@ export function ImportHistory() {
   );
 }
 
+/** Numbered step in the import guide: a title, explanation, and optional content. */
 function Step({
   title,
   body,
@@ -799,6 +820,7 @@ function Step({
   );
 }
 
+/** Selectable card for one import method. */
 function ModeButton({
   active,
   icon,
@@ -834,6 +856,7 @@ function ModeButton({
   );
 }
 
+/** Provider tab (Claude Code or Codex) with an optional badge. */
 function ProviderTab({
   active,
   icon,
@@ -870,6 +893,7 @@ function ProviderTab({
   );
 }
 
+/** One counter in the import result summary. */
 function ResultStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="bg-surface-2 rounded-md px-2.5 py-2">
@@ -879,6 +903,12 @@ function ResultStat({ label, value, color }: { label: string; value: number; col
   );
 }
 
+/**
+ * Human-readable size in B, KB, MB, or GB.
+ *
+ * @param bytes - Size in bytes.
+ * @returns The formatted size.
+ */
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
