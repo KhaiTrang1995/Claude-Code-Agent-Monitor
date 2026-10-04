@@ -111,15 +111,24 @@
 
 import * as c from "./colors.js";
 
-// ── Box drawing ───────────────────────────────────────────────
+/**
+ * Box-drawing characters for the REPL's framed panels, using rounded corners. This is the top-left
+ * corner.
+ */
 const BOX_TL = "╭";
+/** Top-right rounded corner. */
 const BOX_TR = "╮";
+/** Bottom-left rounded corner. */
 const BOX_BL = "╰";
+/** Bottom-right rounded corner. */
 const BOX_BR = "╯";
+/** Horizontal edge. */
 const BOX_H = "─";
+/** Vertical edge. */
 const BOX_V = "│";
 /** Unused "tee" joints; not referenced by {@link box}. */
 const BOX_ML = "├";
+/** Right-hand T-junction, closing a divider line inside a box. */
 const BOX_MR = "┤";
 
 /** Right-pads `text` to `width` visible columns via {@link stripAnsi}. */
@@ -159,10 +168,13 @@ export function divider(width = 60): string {
 
 /** One column definition for {@link table}. */
 export interface Column {
+  /** Property of each row object to read the cell value from. */
   key: string;
+  /** Column header text. */
   label: string;
   /** Auto-sized from header/cell content when omitted. */
   width?: number;
+  /** Cell alignment; defaults to left. Right alignment suits numbers. */
   align?: "left" | "right" | "center";
   /** Styling applied to each cell's raw value before alignment. */
   color?: (t: string) => string;

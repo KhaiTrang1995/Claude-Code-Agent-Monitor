@@ -88,12 +88,20 @@ import type { ToolHandler } from "../core/tool-registry.js";
 /** A `ToolEntry` (`name`/`description`/`handler`) tagged with a `domain` for
  * REPL display/completion only — the domain has no effect on invocation. */
 interface ToolEntry {
+  /** Tool name as registered with the MCP server. */
   name: string;
+  /** Tool description, shortened to 50 characters in tool listings. */
   description: string;
+  /** Function that runs the tool. */
   handler: ToolHandler;
+  /** Public domain the tool is grouped under, from {@link toolDomain}. */
   domain: string;
 }
 
+/**
+ * Name patterns that assign a tool to a public domain for the REPL listing. Checked in order, so
+ * more specific patterns come first.
+ */
 const TOOL_DOMAIN_RULES: Array<[RegExp, string]> = [
   [/update_status|check_for_updates|agent_homes|set_(claude|codex)_home|install_hooks/, "settings"],
   [/workflow/, "workflows"],
@@ -115,10 +123,17 @@ const TOOL_DOMAIN_RULES: Array<[RegExp, string]> = [
   ],
 ];
 
+/**
+ * Domain a tool is listed under in the REPL, from its name.
+ *
+ * @param name - Tool name.
+ * @returns The first matching domain, or `other`.
+ */
 export function toolDomain(name: string): string {
   return TOOL_DOMAIN_RULES.find(([pattern]) => pattern.test(name))?.[1] ?? "other";
 }
 
+/** Color used for each domain's heading in the REPL tool listing. */
 const DOMAIN_COLORS: Record<string, (t: string) => string> = {
   observability: c.brightCyan,
   sessions: c.brightGreen,
@@ -478,7 +493,9 @@ function printConfig(config: AppConfig): void {
  * list directly. Not currently wired into REPL startup — `index.ts` instead
  * combines `collectAllTools` with its own copy of `TOOL_DOMAINS`. */
 export interface ReplToolCollector {
+  /** Tools registered so far. */
   tools: ToolEntry[];
+  /** Registers a tool, tagging it with its domain. */
   register: (name: string, description: string, handler: ToolHandler) => void;
 }
 

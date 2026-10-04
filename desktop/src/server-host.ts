@@ -120,6 +120,10 @@ import { log } from "./logger";
  * The patch is installed exactly once before we require the server module.
  */
 let nativeModulesPatched = false;
+/**
+ * Make the server's `better-sqlite3` requires resolve to the desktop app's copy, which is built for
+ * Electron's ABI. Patches Node's module resolution once; every other module resolves normally.
+ */
 function ensureNativeModulesPatched(): void {
   if (nativeModulesPatched) return;
   nativeModulesPatched = true;
@@ -155,6 +159,7 @@ function ensureNativeModulesPatched(): void {
 export interface ServerHandle {
   /** Origin (e.g. `http://127.0.0.1:4820`) used by the window. */
   url: string;
+  /** TCP port the server listens on. */
   port: number;
   /** True when the server is owned by us (and we should stop it on quit). */
   ownedByUs: boolean;
@@ -172,8 +177,14 @@ export interface ServerHandle {
  * hand-written contract between the two.
  */
 interface ServerModule {
+  /** Builds the Express app. */
   createApp: () => unknown;
+  /** Starts listening on the port and resolves with the HTTP server. */
   startServer: (app: unknown, port: number) => Promise<http.Server>;
+  /**
+   * Starts the server's background work: one-time legacy backfill and token repair, liveness
+   * reaping, and the recurring watchers and sweeps.
+   */
   startBackgroundServices: () => void;
 }
 
@@ -187,6 +198,14 @@ interface ServerModule {
  * Guarded so a "Restart Server" does not double-register schedulers/watchers.
  */
 let backgroundServicesStarted = false;
+/**
+ * Start the background services of a server this app owns, once. Also installs the Claude Code
+ * hooks, so a user who only installed the desktop app gets events flowing without running the
+ * installer from a checkout. Failures are logged and do not stop the window from opening.
+ *
+ * @param appRoot - Root of the bundled app.
+ * @param serverModule - The loaded server module.
+ */
 function bootstrapOwnedServer(appRoot: string, serverModule: ServerModule): void {
   if (backgroundServicesStarted) return;
   backgroundServicesStarted = true;
@@ -233,7 +252,9 @@ export interface ServerSnapshot {
   eventsToday: number;
 }
 
+/** Most recent stats snapshot for the tray menu, or null before the first successful fetch. */
 let lastSnapshot: ServerSnapshot | null = null;
+/** Timer for snapshot polling, or null when polling has not started. */
 let snapshotTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Synchronous accessor for the tray menu's build step — always returns the
@@ -309,6 +330,7 @@ export async function refreshServerSnapshot(port: number | null): Promise<void> 
  */
 export function startSnapshotPolling(getPort: () => number | null, intervalMs = 4000): void {
   if (snapshotTimer) return;
+  /** Fetch a fresh snapshot for whatever port the server currently uses. */
   const tick = (): void => {
     void refreshServerSnapshot(getPort());
   };
@@ -378,6 +400,7 @@ async function probePort(port: number, timeoutMs = 1500): Promise<"healthy" | "b
   // 1. Is anything listening? Try to connect.
   const reachable = await new Promise<boolean>((resolve) => {
     const socket = net.createConnection({ host: "127.0.0.1", port });
+    /** Settle the probe once and close the socket. */
     const done = (v: boolean) => {
       socket.destroy();
       resolve(v);
