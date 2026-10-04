@@ -358,6 +358,10 @@ export function CcConfig() {
     return () => clearTimeout(id);
   }, [toast]);
 
+  /**
+   * Fetch every config surface in parallel for the selected scope and replace the page state,
+   * recording when it finished.
+   */
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -450,6 +454,7 @@ export function CcConfig() {
     void fetchAll();
   });
 
+  /** Open a file in the read-only viewer, loading its contents. */
   const openViewer = useCallback(async (path: string) => {
     setViewer({ path, data: null, error: null });
     try {
@@ -461,6 +466,11 @@ export function CcConfig() {
     }
   }, []);
 
+  /**
+   * Open the editor to create an artifact, starting from the localized template for its type. The
+   * default scope follows the scope filter (project when filtering by project, otherwise user)
+   * unless one is given.
+   */
   const openCreate = useCallback(
     (type: CcArtifactType, overrideScope?: "user" | "project") => {
       const tplKey = `edit.templates.${type}`;
@@ -472,6 +482,7 @@ export function CcConfig() {
     [scope, t]
   );
 
+  /** Open the editor for an existing artifact. */
   const openEdit = useCallback(
     (type: CcArtifactType, item: { scope: "user" | "project"; name: string; filePath: string }) => {
       setEditor({
@@ -485,6 +496,7 @@ export function CcConfig() {
     []
   );
 
+  /** Ask for confirmation before deleting an artifact. */
   const openDelete = useCallback(
     (
       type: CcArtifactType,
@@ -511,6 +523,7 @@ export function CcConfig() {
     [t]
   );
 
+  /** Open the editor for an auto-memory file. Ignored for items without a project or file name. */
   const openEditAuto = useCallback((item: CcMemoryItem) => {
     if (!item.project || !item.name) return;
     setEditor({
@@ -523,6 +536,10 @@ export function CcConfig() {
     });
   }, []);
 
+  /**
+   * Ask for confirmation before deleting an auto-memory file. Ignored for items without a project
+   * or file name.
+   */
   const openDeleteAuto = useCallback((item: CcMemoryItem) => {
     if (!item.project || !item.name) return;
     setConfirmDelete({
@@ -534,12 +551,21 @@ export function CcConfig() {
     });
   }, []);
 
+  /**
+   * Write an artifact from the editor, then close the editor, show a toast naming the backup when
+   * one was taken, and refetch.
+   */
   const handleSave = useCallback(
     async (args: {
+      /** Kind of artifact. */
       type: CcArtifactType;
+      /** Layer to write into. */
       targetScope: "user" | "project" | "auto-memory";
+      /** Artifact name; undefined for singleton files such as `CLAUDE.md`. */
       name: string | undefined;
+      /** Full file contents. */
       content: string;
+      /** Project slug, for auto-memory files. */
       project?: string;
     }) => {
       const result: CcMutationResult = await api.ccConfig.write({
@@ -561,6 +587,10 @@ export function CcConfig() {
     [fetchAll, t]
   );
 
+  /**
+   * Delete the confirmed artifact, close the dialog, show a toast with the backup path, and
+   * refetch.
+   */
   const handleDelete = useCallback(async () => {
     if (!confirmDelete) return;
     try {
@@ -796,7 +826,9 @@ function ProviderToggle({
   value,
   onChange,
 }: {
+  /** Selected explorer. */
   value: "claude" | "codex";
+  /** Called with the chosen explorer. */
   onChange: (value: "claude" | "codex") => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -907,12 +939,17 @@ function Tabs({ current, onSelect, counts }: TabsProps) {
     }
   }, [current]);
 
+  /** Scroll the tab bar by most of its visible width, at least 200px. */
   const scrollByButton = (dir: 1 | -1) => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollBy({ left: dir * Math.max(200, el.clientWidth * 0.6), behavior: "smooth" });
   };
 
+  /**
+   * Badge count for a tab: user plus project counts where the overview splits them, or null when
+   * there is no count.
+   */
   const countFor = (key: TabKey): number | null => {
     if (!counts) return null;
     switch (key) {
@@ -1289,10 +1326,13 @@ function OverviewPanel({
   overview,
   onTabChange,
 }: {
+  /** Overview data, or null while loading. */
   overview: CcOverview | null;
+  /** Switches tab when a summary tile is clicked. */
   onTabChange: (tab: TabKey) => void;
 }) {
   const { t } = useTranslation("ccConfig");
+  /** Stable tab-switch callback for the summary tiles. */
   const gotoTab = useCallback((nextTab: TabKey) => onTabChange(nextTab), [onTabChange]);
   if (!overview) return <SkeletonRows n={4} />;
   const { roots, counts } = overview;
@@ -1498,9 +1538,13 @@ function RootRow({
   label,
   value,
 }: {
+  /** Icon shown in the row. */
   icon: typeof FolderTree;
+  /** Color tone. */
   tone: Tone;
+  /** Row label. */
   label: string;
+  /** Filesystem path. */
   value: string;
 }) {
   const T = TONES[tone];
@@ -1554,6 +1598,10 @@ interface MdItemListProps {
  * MdItemCard} per item. Shows a skeleton while loading and an empty state when nothing matches.
  */
 function MdItemList({ items, search, onOpen, onEdit, onDelete, kind }: MdItemListProps) {
+  /**
+   * Items whose name or frontmatter `name` / `description` contains the search text; null while
+   * loading.
+   */
   const filtered = useMemo(() => {
     if (!items) return null;
     const q = search.toLowerCase();
@@ -1889,6 +1937,7 @@ function McpPanel({ data, search }: { data: CcMcpResponse | null; search: string
   const { t } = useTranslation("ccConfig");
   if (!data) return <SkeletonRows n={3} />;
   const all = [...data.user, ...data.projectScoped];
+  /** Servers whose name contains the search text. */
   const filter = (arr: CcMcpServer[]) =>
     arr.filter((s) => !search || s.name.toLowerCase().includes(search.toLowerCase()));
   return (
@@ -2014,9 +2063,13 @@ function HooksPanel({
   search,
   onOpen,
 }: {
+  /** Hook configuration per settings layer, or null while loading. */
   sources: CcHookSource[] | null;
+  /** Scripts in the hooks directory, or null when not loaded. */
   scripts: CcHookScripts | null;
+  /** Search text matched against hook event names. */
   search: string;
+  /** Opens a file in the viewer. */
   onOpen: (p: string) => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -2254,8 +2307,11 @@ function SettingsPanel({
   statusline,
   onOpen,
 }: {
+  /** Settings layers, or null while loading. */
   sources: CcSettingsSource[] | null;
+  /** Statusline configuration, or null when not loaded. */
   statusline: CcStatusline | null;
+  /** Opens a file in the viewer. */
   onOpen: (p: string) => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -2352,7 +2408,9 @@ function SettingsBlock({
   source,
   onOpen,
 }: {
+  /** Settings layer to show. */
   source: CcSettingsSource;
+  /** Opens the settings file in the viewer. */
   onOpen: (p: string) => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -2622,6 +2680,10 @@ function MemoryPanel({
 
   const q = search.trim().toLowerCase();
 
+  /**
+   * Split memory items into the two `CLAUDE.md` files and the auto-memory files, filter both by the
+   * search text, group auto-memory files by project, and note which `CLAUDE.md` scopes are missing.
+   */
   const { primary, autoFiltered, groups, missingScopes } = useMemo(() => {
     const list = items ?? [];
     const primaryItems = list.filter(
@@ -2630,6 +2692,9 @@ function MemoryPanel({
     );
     const autoItems = list.filter((m) => m.scope === "auto-memory");
 
+    /**
+     * Whether an auto-memory file matches the search text (name, project, frontmatter, or preview).
+     */
     const matchesAuto = (m: CcMemoryItem) => {
       if (!q) return true;
       const blob = [m.name, m.project, m.frontmatter?.description, m.frontmatter?.name, m.preview]
@@ -2839,8 +2904,10 @@ function MemoryProjectGroup({
     []
   );
 
+  /** Key used to find a fact file's row when an index link is clicked. */
   const rowKey = useCallback((m: CcMemoryItem) => m.name || normalizeMemoryTarget(m.file), []);
 
+  /** Scroll to the fact file an index link points at and highlight it for 2.2 seconds. */
   const handleJump = useCallback(
     (target: string) => {
       const name = normalizeMemoryTarget(target);
@@ -3077,7 +3144,9 @@ function MarketplacesPanel({
   data,
   search,
 }: {
+  /** Registered marketplaces, or null while loading. */
   data: CcMarketplacesResponse | null;
+  /** Search text matched against names. */
   search: string;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -3178,9 +3247,13 @@ function KeybindingsPanel({
   onSaved,
   onToast,
 }: {
+  /** Parsed keybindings, or null while loading. */
   data: CcKeybindings | null;
+  /** Search text matched against contexts, keys, and actions. */
   search: string;
+  /** Called after a successful save, to refetch. */
   onSaved: () => void;
+  /** Shows a toast. */
   onToast: (toast: NonNullable<Toast>) => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -3189,6 +3262,7 @@ function KeybindingsPanel({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  /** Enter edit mode with a deep copy of the bindings, so edits never touch the fetched data. */
   const startEdit = useCallback(() => {
     const groups = data?.groups ?? [];
     // Deep clone so edits never mutate the fetched data.
@@ -3199,17 +3273,22 @@ function KeybindingsPanel({
     setEditing(true);
   }, [data]);
 
+  /** Leave edit mode and discard the draft. */
   const cancelEdit = useCallback(() => {
     setEditing(false);
     setDraft([]);
     setErr(null);
   }, []);
 
+  /** Rename a context in the draft. */
   const updateContext = (gi: number, value: string) =>
     setDraft((d) => d.map((g, i) => (i === gi ? { ...g, context: value } : g)));
+  /** Remove a context and its bindings from the draft. */
   const removeContext = (gi: number) => setDraft((d) => d.filter((_, i) => i !== gi));
+  /** Add an empty context with one empty binding. */
   const addContext = () =>
     setDraft((d) => [...d, { context: "", bindings: [{ key: "", action: "" }] }]);
+  /** Change a binding's key or action in the draft. */
   const updateBinding = (gi: number, bi: number, field: "key" | "action", value: string) =>
     setDraft((d) =>
       d.map((g, i) =>
@@ -3218,15 +3297,22 @@ function KeybindingsPanel({
           : g
       )
     );
+  /** Remove one binding from the draft. */
   const removeBinding = (gi: number, bi: number) =>
     setDraft((d) =>
       d.map((g, i) => (i === gi ? { ...g, bindings: g.bindings.filter((_, j) => j !== bi) } : g))
     );
+  /** Add an empty binding to a context. */
   const addBinding = (gi: number) =>
     setDraft((d) =>
       d.map((g, i) => (i === gi ? { ...g, bindings: [...g.bindings, { key: "", action: "" }] } : g))
     );
 
+  /**
+   * Validate and save the draft. Mirrors the server's checks for instant feedback: every context
+   * needs a name, contexts must be unique, and each binding needs a key and action with no
+   * duplicate keys within a context.
+   */
   const handleSave = useCallback(async () => {
     const groups: CcKeybindingGroup[] = draft.map((g) => ({
       context: g.context.trim(),
@@ -3553,7 +3639,9 @@ function FileViewer({
   state,
   onClose,
 }: {
+  /** File path plus its loaded contents or load error. */
   state: { path: string; data: CcFileResponse | null; error: string | null };
+  /** Closes the viewer. */
   onClose: () => void;
 }) {
   const { t } = useTranslation("ccConfig");
@@ -3676,6 +3764,10 @@ function EditorModal({ state, onClose, onSave }: EditorModalProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  /**
+   * Save the editor contents. Creating a non-memory artifact requires a name; errors are shown
+   * inline.
+   */
   const handleSave = useCallback(async () => {
     setSaving(true);
     setError(null);
@@ -3859,6 +3951,7 @@ function ConfirmDeleteModal({ state, onCancel, onConfirm }: ConfirmDeleteModalPr
     return () => window.removeEventListener("keydown", onKey);
   }, [onCancel]);
 
+  /** Run the delete, keeping the dialog busy until it settles. */
   const handleConfirm = useCallback(async () => {
     setBusy(true);
     try {
