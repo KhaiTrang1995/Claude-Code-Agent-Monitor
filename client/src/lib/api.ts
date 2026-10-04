@@ -634,15 +634,28 @@ export const api = {
      *   row count and the effective paging window for building pager controls.
      */
     list: (params?: {
+      /** Lifecycle status to filter by (for example `active` or `completed`). */
       status?: string;
+      /** Free-text search matched server-side. */
       q?: string;
+      /** Working directories to include. */
       cwd?: string[];
+      /** Sort column: `time` (default), `duration`, or `price`. */
       sort_by?: string;
+      /** Sort descending; sent even when explicitly false. */
       sort_desc?: boolean;
+      /** Page size. */
       limit?: number;
+      /** Rows to skip. */
       offset?: number;
+      /** Restrict to one product's sessions. */
       provider?: "claude" | "codex";
+      /**
+       * Include transient rows: interactive Codex TUI processes discovered in memory before Codex
+       * has written a session id. Only added to the first page of local results.
+       */
       include_transient?: boolean;
+      /** Attach the compact task-progress summary (`todo_summary`) to each row. */
       include_task_progress?: boolean;
     }) => {
       const qs = new URLSearchParams();
@@ -753,11 +766,17 @@ export const api = {
     transcript: (
       id: string,
       params?: {
+        /** Read a subagent's transcript instead of the main one. */
         agent_id?: string;
+        /** Read a Workflow-tool run's transcript. */
         run_id?: string;
+        /** Maximum messages to return. */
         limit?: number;
+        /** Legacy numeric offset; prefer the line cursors for live files. */
         offset?: number;
+        /** Return messages after this JSONL line number. */
         after?: number;
+        /** Return messages before this JSONL line number. */
         before?: number;
       }
     ) => {
@@ -795,10 +814,19 @@ export const api = {
      * @returns `{ agents }` — the matching agents (note: no `total` here).
      */
     list: (params?: {
+      /** Agent status to filter by. */
       status?: string;
+      /** Restrict to one session's agents. */
       session_id?: string;
+      /** Page size; the server defaults to its 10,000-row cap. */
       limit?: number;
+      /** Rows to skip. */
       offset?: number;
+      /**
+       * Include transient rows: interactive Codex TUI processes discovered in memory before Codex
+       * has written a session id. Only added to the first page of local results. Only applies when
+       * filtering by `waiting`.
+       */
       include_transient?: boolean;
     }) => {
       const qs = new URLSearchParams();
@@ -841,14 +869,23 @@ export const api = {
      * @returns `{ events, limit, offset, total }` — the page and paging metadata.
      */
     list: (params?: {
+      /** Event types to include (OR'd). */
       event_type?: string[];
+      /** Tool names to include (OR'd). */
       tool_name?: string[];
+      /** Agent ids to include (OR'd). */
       agent_id?: string[];
+      /** One session id, or several (OR'd). */
       session_id?: string | string[];
+      /** Free-text search across event summaries. */
       q?: string;
+      /** Start of the time window. */
       from?: string;
+      /** End of the time window. */
       to?: string;
+      /** Page size; 0 is forwarded. */
       limit?: number;
+      /** Rows to skip; 0 is forwarded. */
       offset?: number;
     }) => {
       const qs = new URLSearchParams();
@@ -1210,10 +1247,18 @@ export const api = {
        * @returns The plan (and, when applied, what was removed).
        */
       prune: (params: {
+        /** Prune finished sessions idle longer than this many days. */
         max_age_days?: number;
+        /**
+         * Then prune oldest-first until the total is under this size: bytes, or a size string such
+         * as `5GB`.
+         */
         max_bytes?: number | string;
+        /** Also prune snapshots that have no session row. */
         orphans?: boolean;
+        /** Preview only; the server treats anything but an explicit `false` as a dry run. */
         dry_run?: boolean;
+        /** Required, with `dry_run: false`, to actually delete. */
         confirm?: "PRUNE_SNAPSHOTS";
       }) =>
         request<SnapshotPruneResult>("/settings/snapshots/prune", {
@@ -1871,10 +1916,15 @@ export const api = {
        * @returns `{ rule }` — the created {@link AlertRule} as persisted.
        */
       create: (rule: {
+        /** Rule name, used in alert messages. */
         name: string;
+        /** Kind of rule. */
         rule_type: AlertRule["rule_type"];
+        /** Rule-type-specific settings. */
         config: AlertRule["config"];
+        /** Whether the rule is active; defaults to enabled. */
         enabled?: boolean;
+        /** Minimum seconds between alerts from this rule for the same target; defaults to 300. */
         cooldown_seconds?: number;
       }) =>
         request<{ rule: AlertRule }>("/alerts/rules", {
@@ -1945,13 +1995,21 @@ export const api = {
      * @returns `{ target }` — the created {@link WebhookTarget} (redacted).
      */
     create: (target: {
+      /** Display name. */
       name: string;
+      /** Provider type; fixed after creation. */
       type: WebhookType;
+      /** Destination URL. Hosted providers require HTTPS. */
       url?: string;
+      /** Whether the target receives alerts; defaults to enabled. */
       enabled?: boolean;
+      /** Signing secret for providers that support one. */
       secret?: string;
+      /** Extra HTTP headers for providers that support them. */
       headers?: Record<string, string>;
+      /** Provider-specific settings. */
       config?: Record<string, string>;
+      /** Alert rules the target is limited to; omitted means every rule. */
       rule_ids?: string[];
     }) =>
       request<{ target: WebhookTarget }>("/webhooks", {
@@ -1972,12 +2030,19 @@ export const api = {
     update: (
       id: string,
       patch: {
+        /** New display name. */
         name?: string;
+        /** New destination URL; omit to keep the stored one. */
         url?: string;
+        /** Enable or disable the target. */
         enabled?: boolean;
+        /** New signing secret, or `null` to clear the stored one; omit to keep it. */
         secret?: string | null;
+        /** Replacement HTTP headers. */
         headers?: Record<string, string>;
+        /** Replacement provider-specific settings. */
         config?: Record<string, string>;
+        /** Replacement rule scope; an empty list means every rule. */
         rule_ids?: string[];
       }
     ) =>
