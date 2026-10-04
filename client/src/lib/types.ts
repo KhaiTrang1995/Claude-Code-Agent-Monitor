@@ -953,13 +953,21 @@ export function isAgentAwaitingInput(agent: Agent | undefined | null): boolean {
 }
 
 /** Overlays {@link AWAITING_STATUS} on top of `agent.status` when the agent is
- *  blocked on user input; otherwise passes the persisted status through unchanged. */
+ *  blocked on user input; otherwise passes the persisted status through unchanged.
+ *
+ * @param agent - Agent row.
+ * @returns `waiting` while awaiting input, otherwise the stored status.
+ */
 export function effectiveAgentStatus(agent: Agent): EffectiveAgentStatus {
   return isAgentAwaitingInput(agent) ? AWAITING_STATUS : agent.status;
 }
 
 /** Overlays {@link AWAITING_STATUS} on top of `session.status` when the session
- *  is blocked on user input; otherwise passes the persisted status through unchanged. */
+ *  is blocked on user input; otherwise passes the persisted status through unchanged.
+ *
+ * @param session - Session row.
+ * @returns `waiting` while awaiting input, otherwise the stored status.
+ */
 export function effectiveSessionStatus(session: Session): EffectiveSessionStatus {
   return isSessionAwaitingInput(session) ? AWAITING_STATUS : session.status;
 }
@@ -968,6 +976,9 @@ export function effectiveSessionStatus(session: Session): EffectiveSessionStatus
  * Validates the raw `awaiting_reason` string the server sent against the known
  * {@link AwaitingReason} set. Unknown/future values degrade to null so the UI
  * falls back to the plain "Waiting" badge instead of rendering a key miss.
+ *
+ * @param value - Raw reason from the server.
+ * @returns A known reason, or null.
  */
 export function normalizeAwaitingReason(value: string | null | undefined): AwaitingReason | null {
   return value && (AWAITING_REASONS as readonly string[]).includes(value)
@@ -980,6 +991,8 @@ export function normalizeAwaitingReason(value: string | null | undefined): Await
  * counts as waiting (per {@link isSessionAwaitingInput}) - a stale reason on a
  * finished/idle session is never surfaced.
  * @returns The normalized reason, or null when not waiting / reason unknown.
+ *
+ * @param session - Session row, or nothing.
  */
 export function sessionAwaitingReason(session: Session | undefined | null): AwaitingReason | null {
   if (!session || !isSessionAwaitingInput(session)) return null;
@@ -990,6 +1003,8 @@ export function sessionAwaitingReason(session: Session | undefined | null): Awai
  * The agent's {@link AwaitingReason}, gated on {@link isAgentAwaitingInput} the
  * same way {@link sessionAwaitingReason} gates on the session predicate.
  * @returns The normalized reason, or null when not waiting / reason unknown.
+ *
+ * @param agent - Agent row, or nothing.
  */
 export function agentAwaitingReason(agent: Agent | undefined | null): AwaitingReason | null {
   if (!agent || !isAgentAwaitingInput(agent)) return null;

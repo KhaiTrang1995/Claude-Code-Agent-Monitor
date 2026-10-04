@@ -119,7 +119,12 @@ function isMcp(toolName: string): boolean {
 
 /** Builds a unified-diff hunk from a bare old_string / new_string pair. One
  *  hunk, minimal context - good enough for the input preview before the
- *  actual structuredPatch comes back in the response. */
+ *  actual structuredPatch comes back in the response.
+ *
+ * @param oldStr - Text being replaced.
+ * @param newStr - Replacement text.
+ * @returns One hunk covering the whole change, or none when both are empty.
+ */
 function diffFromStrings(oldStr: string, newStr: string): DiffHunk[] {
   if (!oldStr && !newStr) return [];
   const oldLines = oldStr ? oldStr.split(/\r?\n/) : [];
@@ -139,7 +144,11 @@ function diffFromStrings(oldStr: string, newStr: string): DiffHunk[] {
 }
 
 /** Normalises the `structuredPatch` array that shows up in Edit/NotebookEdit
- *  tool_response into DiffHunk shape. Tolerates missing fields. */
+ *  tool_response into DiffHunk shape. Tolerates missing fields.
+ *
+ * @param value - The tool response's `structuredPatch`.
+ * @returns The hunks, or none when the value is not an array.
+ */
 function parseStructuredPatch(value: unknown): DiffHunk[] {
   if (!Array.isArray(value)) return [];
   const hunks: DiffHunk[] = [];
@@ -162,7 +171,11 @@ function parseStructuredPatch(value: unknown): DiffHunk[] {
 
 /** Best-effort match list from a Grep tool_response. Supports the common
  *  shapes: array of strings, array of {file,line,text}, or an object with
- *  `matches` / `files` keys. */
+ *  `matches` / `files` keys.
+ *
+ * @param value - Grep tool response.
+ * @returns The matches found.
+ */
 function parseGrepMatches(value: unknown): GrepMatch[] {
   if (Array.isArray(value)) return value.map(toMatch).filter(Boolean) as GrepMatch[];
   const o = obj(value);

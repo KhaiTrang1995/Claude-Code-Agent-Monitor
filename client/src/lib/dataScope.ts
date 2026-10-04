@@ -178,7 +178,11 @@ export function getScope(): DataScope {
   return current;
 }
 
-/** Replace the scope, persist it, and notify all subscribers. */
+/**
+ * Replace the scope, persist it, and notify all subscribers.
+ *
+ * @param next - New scope; when it has no provider, the current provider is kept.
+ */
 export function setScope(next: DataScope): void {
   current = {
     mode: next.mode,
@@ -189,7 +193,12 @@ export function setScope(next: DataScope): void {
   listeners.forEach((l) => l());
 }
 
-/** Subscribe to scope changes (for useSyncExternalStore / manual wiring). */
+/**
+ * Subscribe to scope changes (for useSyncExternalStore / manual wiring).
+ *
+ * @param cb - Called after every change.
+ * @returns A function that unsubscribes.
+ */
 export function subscribeScope(cb: () => void): () => void {
   listeners.add(cb);
   return () => listeners.delete(cb);
@@ -213,7 +222,11 @@ export function activeProvidersParam(): string | null {
   return current.provider === "both" ? null : current.provider || "claude";
 }
 
-/** Update only the product dimension while preserving the selected machines. */
+/**
+ * Update only the product dimension while preserving the selected machines.
+ *
+ * @param provider - New product scope.
+ */
 export function setProviderScope(provider: ProviderScope): void {
   setScope({ ...current, provider });
 }

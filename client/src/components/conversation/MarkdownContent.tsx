@@ -286,7 +286,13 @@ function parseBlocks(src: string): Block[] {
   return blocks;
 }
 
-/** Render inline markdown (bold/italic/code/strikethrough/links/auto-links). */
+/**
+ * Render inline markdown (bold/italic/code/strikethrough/links/auto-links).
+ *
+ * @param text - Inline markdown.
+ * @param baseKey - Prefix for React keys, unique within the parent.
+ * @returns The rendered nodes.
+ */
 function renderInline(text: string, baseKey = ""): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   let i = 0;
@@ -395,7 +401,13 @@ function renderInline(text: string, baseKey = ""): React.ReactNode[] {
   return out;
 }
 
-/** Render a single list item, handling [ ] / [x] task list prefixes. */
+/**
+ * Render a single list item, handling [ ] / [x] task list prefixes.
+ *
+ * @param item - List item text, possibly starting with `[ ]` or `[x]`.
+ * @param key - React key.
+ * @returns The rendered item, with a checkbox for task items.
+ */
 function renderListItem(item: string, key: string): React.ReactNode {
   const taskMatch = item.match(/^\[([ xX])\]\s+(.*)$/s);
   if (taskMatch) {

@@ -114,7 +114,12 @@ const BONUS_EXACT_SUBSTRING = 40;
 /** Extra score when that contiguous substring is at the very start of the text. */
 const BONUS_PREFIX = 30;
 
-/** Characters after which the next character counts as starting a word. */
+/**
+ * Characters after which the next character counts as starting a word.
+ *
+ * @param char - Preceding character.
+ * @returns True for space, `-`, `_`, `/`, `.`, and `:`.
+ */
 function isSeparator(char: string): boolean {
   return (
     char === " " || char === "-" || char === "_" || char === "/" || char === "." || char === ":"
@@ -140,6 +145,9 @@ interface FoldedText {
  * later character shifts right. Highlighting with folded offsets would then
  * underline the wrong characters in exactly the locales this app ships in.
  * Folding per character keeps the mapping exact, at the cost of one pass.
+ *
+ * @param value - Original text.
+ * @returns The folded text with an offset map back to `value`.
  */
 function foldWithOffsets(value: string): FoldedText {
   let text = "";
@@ -160,6 +168,9 @@ function foldWithOffsets(value: string): FoldedText {
 /**
  * Fold case and strip diacritics so `analitica` still matches "Analítica" and a
  * Vietnamese label is reachable from an unaccented keyboard.
+ *
+ * @param value - Text to fold.
+ * @returns Lowercased text without diacritics.
  */
 export function foldText(value: string): string {
   return foldWithOffsets(value).text;
@@ -243,7 +254,13 @@ export function fuzzyMatchFields(
   return null;
 }
 
-/** Split `text` into runs, flagging which are part of the match. */
+/**
+ * Split `text` into runs, flagging which are part of the match.
+ *
+ * @param text - Original text.
+ * @param indices - Positions of matched characters in `text`.
+ * @returns Consecutive runs with a flag marking matched runs.
+ */
 export function highlightSegments(
   text: string,
   indices: number[]

@@ -271,6 +271,10 @@ export function statusOf(state: TabbyState): TabbyStatus {
  * Pure mood resolver. Highest-priority matching state wins. `now` is injected
  * so callers (and tests) control the clock; transient windows (happy/worried)
  * and inactivity windows (stuck/sleeping) are evaluated against it.
+ *
+ * @param state - Current state.
+ * @param now - Current time in epoch milliseconds.
+ * @returns The mood to show.
  */
 export function deriveMood(state: TabbyState, now: number): Mood {
   if (!state.connected) return "disconnected";
@@ -291,6 +295,10 @@ export function deriveMood(state: TabbyState, now: number): Mood {
  * Fold a single WebSocket message into the Tabby state. Returns the next state
  * (new object) and a one-shot pulse describing what happened. Unknown or
  * irrelevant message types pass through unchanged with a `null` pulse.
+ *
+ * @param state - Current state.
+ * @param msg - Incoming WebSocket message.
+ * @param now - Current time in epoch milliseconds.
  */
 export function reduceTabby(
   state: TabbyState,
@@ -416,6 +424,11 @@ export function reduceTabby(
  * live WS deltas that arrive *after* it mounts, so a freshly-loaded page shows
  * "0 live" even when sessions already exist. Merges in non-finished sessions;
  * never clears the error window. Live WS deltas continue to refine this.
+ *
+ * @param state - Current state.
+ * @param rows - Sessions from the REST list.
+ * @param now - Current time in epoch milliseconds.
+ * @returns The state with those sessions tracked.
  */
 export function seedSessions(
   state: TabbyState,
@@ -432,7 +445,12 @@ export function seedSessions(
   return { ...state, sessions, lastActivityAt: now };
 }
 
-/** Drop all errored sessions from tracking (used by "clear alerts"). */
+/**
+ * Drop all errored sessions from tracking (used by "clear alerts").
+ *
+ * @param state - Current state.
+ * @returns The state without errored sessions and without the worried window.
+ */
 export function clearErrors(state: TabbyState): TabbyState {
   const sessions: TabbyState["sessions"] = {};
   for (const [id, s] of Object.entries(state.sessions)) {

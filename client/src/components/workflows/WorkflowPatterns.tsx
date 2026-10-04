@@ -87,6 +87,9 @@ function patternIcon(steps: string[]): LucideIcon {
 /**
  * Find the first agent that appears more than once in the sequence (loop indicator).
  * Returns null if every step is unique.
+ *
+ * @param steps - Subagent types in order.
+ * @returns The repeated type, or null.
  */
 function findRepeatedStep(steps: string[]): string | null {
   for (let i = 0; i < steps.length; i++) {
@@ -100,6 +103,10 @@ function findRepeatedStep(steps: string[]): string | null {
  * Build a deterministic, value-dependent narrative for a workflow pattern.
  * Pure rule-based mapping - same input always yields the same output, so the
  * UI never produces hallucinated descriptions for ambiguous patterns.
+ *
+ * @param pattern - Pattern to describe.
+ * @param t - Translation function.
+ * @returns The description, or an empty string for an empty pattern.
  */
 function describePattern(pattern: WorkflowPattern, t: TFn): string {
   const { steps, percentage } = pattern;
@@ -138,6 +145,10 @@ function describePattern(pattern: WorkflowPattern, t: TFn): string {
 /**
  * Pick a suggestion bucket based on chain length and whether a loop exists.
  * Loop wins over length so the user is reminded to confirm intentional loops.
+ *
+ * @param pattern - Pattern to advise on.
+ * @param t - Translation function.
+ * @returns The suggestion text.
  */
 function suggestionForPattern(pattern: WorkflowPattern, t: TFn): string {
   const { steps } = pattern;

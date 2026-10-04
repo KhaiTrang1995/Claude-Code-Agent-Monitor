@@ -540,6 +540,9 @@ const PROVIDER_SCOPES: ProviderScope[] = ["both", "claude", "codex"];
 /**
  * Build every non-session command. Session results are appended by the palette
  * itself because they are fetched, not enumerated.
+ *
+ * @param ctx - App state and actions the commands read and call.
+ * @returns Every command, in catalog order.
  */
 export function buildPaletteCommands(ctx: PaletteContext): PaletteCommand[] {
   const { t, navigate } = ctx;

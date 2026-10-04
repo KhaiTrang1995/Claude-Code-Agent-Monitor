@@ -191,6 +191,9 @@ function findCommandBlocks(input: string): MatchSpan[] {
  * Walks a message text and splits out recognized TUI/command segments while
  * preserving the surrounding prose as `text` segments. Returns a single
  * `text` segment for inputs that contain no recognized markup.
+ *
+ * @param input - Message text.
+ * @returns Segments in order.
  */
 export function parseTuiSegments(input: string): TuiSegment[] {
   if (!KNOWN_TAG_RE.test(input)) {
@@ -222,7 +225,12 @@ export function parseTuiSegments(input: string): TuiSegment[] {
   return segments.length > 0 ? segments : [{ kind: "text", text: input }];
 }
 
-/** True if any recognized TUI tag would alter the rendering of this text. */
+/**
+ * True if any recognized TUI tag would alter the rendering of this text.
+ *
+ * @param input - Message text.
+ * @returns True when the text contains a known tag.
+ */
 export function hasTuiTags(input: string): boolean {
   return KNOWN_TAG_RE.test(input);
 }
