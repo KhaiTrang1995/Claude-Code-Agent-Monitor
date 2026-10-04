@@ -157,6 +157,10 @@ export function ImportHistory() {
   const [backupResult, setBackupResult] = useState<ImportBackupResult | null>(null);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
 
+  /**
+   * Translate a provider-specific string: Codex keys live under `import.codex`, Claude keys under
+   * `import`.
+   */
   const providerText = useCallback(
     (key: string, options?: Record<string, unknown>) =>
       provider === "codex" ? t(`import.codex.${key}`, options) : t(`import.${key}`, options),
@@ -198,6 +202,7 @@ export function ImportHistory() {
     });
   }, [provider]);
 
+  /** Clear the previous error, result, and progress before a new import. */
   const reset = useCallback(() => {
     setErrorMsg(null);
     setResult(null);
@@ -205,6 +210,7 @@ export function ImportHistory() {
     setProgress(null);
   }, []);
 
+  /** Rescan the provider's default history folder. */
   const handleRescan = async () => {
     reset();
     setRunning(true);
@@ -219,6 +225,7 @@ export function ImportHistory() {
     }
   };
 
+  /** Scan a folder on the server's filesystem; a path is required. */
   const handleScanPath = async () => {
     reset();
     const trimmed = folderPath.trim();
@@ -238,6 +245,7 @@ export function ImportHistory() {
     }
   };
 
+  /** Upload the selected transcript files or archives; at least one file is required. */
   const handleUpload = async () => {
     reset();
     if (files.length === 0) {
@@ -258,6 +266,7 @@ export function ImportHistory() {
     }
   };
 
+  /** Restore a backup export file. */
   const handleRestore = async () => {
     reset();
     if (!backupFile) {
@@ -278,6 +287,10 @@ export function ImportHistory() {
     }
   };
 
+  /**
+   * Accept the chosen files, keeping only transcript files (`.jsonl`, `.meta.json`) and archives
+   * (`.zip`, `.tar`, `.tar.gz`, `.tgz`, `.gz`).
+   */
   const onSelectFiles = (list: FileList | null) => {
     if (!list) return;
     const arr = Array.from(list).filter((f) => {
@@ -303,6 +316,7 @@ export function ImportHistory() {
     });
   };
 
+  /** Copy the guide's archive command and show a check mark for 1.5 seconds. */
   const copyArchiveCmd = async () => {
     if (!guide) return;
     try {
@@ -336,6 +350,7 @@ export function ImportHistory() {
 
   const totalSize = files.reduce((s, f) => s + f.size, 0);
 
+  /** Switch provider, clearing the chosen folder and files. Ignored while an import is running. */
   const chooseProvider = (next: RunProvider) => {
     if (next === provider || running) return;
     setProvider(next);
@@ -807,8 +822,11 @@ function Step({
   body,
   children,
 }: {
+  /** Step title. */
   title: string;
+  /** Step explanation. */
   body: string;
+  /** Optional content under the explanation, such as a command. */
   children?: React.ReactNode;
 }) {
   return (
@@ -828,10 +846,15 @@ function ModeButton({
   desc,
   onClick,
 }: {
+  /** Whether this method is selected. */
   active: boolean;
+  /** Icon element. */
   icon: React.ReactNode;
+  /** Method name. */
   title: string;
+  /** One-line description. */
   desc: string;
+  /** Selects the method. */
   onClick: () => void;
 }) {
   return (
@@ -864,10 +887,15 @@ function ProviderTab({
   badge,
   onClick,
 }: {
+  /** Whether this provider is selected. */
   active: boolean;
+  /** Icon element. */
   icon: React.ReactNode;
+  /** Provider name. */
   label: string;
+  /** Optional badge, such as BETA. */
   badge?: string;
+  /** Selects the provider. */
   onClick: () => void;
 }) {
   return (

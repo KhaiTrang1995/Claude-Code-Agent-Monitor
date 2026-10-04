@@ -179,8 +179,11 @@ function Toggle({
   onChange,
   label,
 }: {
+  /** Whether the switch is on. */
   checked: boolean;
+  /** Called with the new state. */
   onChange: (v: boolean) => void;
+  /** Optional label beside the switch. */
   label?: string;
 }) {
   return (
@@ -224,11 +227,13 @@ export function WebhookSettings() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
 
+  /** Look up a provider definition by type. */
   const providerOf = useCallback(
     (type: WebhookType) => providers.find((p) => p.type === type),
     [providers]
   );
 
+  /** Load the configured targets. */
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -256,9 +261,11 @@ export function WebhookSettings() {
       .catch(() => setRules([]));
   }, []);
 
+  /** Merge a change into the open form. */
   const set = (patch: Partial<FormState>) =>
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
 
+  /** Open the form to add a target, defaulting to the first provider with its field defaults. */
   const openCreate = () => {
     const first = providers[0];
     setForm({
@@ -278,6 +285,10 @@ export function WebhookSettings() {
     setFormOpen(true);
   };
 
+  /**
+   * Open the form to edit a target. Non-secret settings are prefilled; secret fields and the URL
+   * start blank, since they are redacted and only re-entered to change them.
+   */
   const openEdit = (target: WebhookTarget) => {
     const provider = providerOf(target.type);
     // Prefill non-secret config (region, chat_id, severity, …); leave secret
@@ -305,6 +316,7 @@ export function WebhookSettings() {
     setFormOpen(true);
   };
 
+  /** Close the form and discard its state. */
   const closeForm = () => {
     setFormOpen(false);
     setForm(null);
@@ -316,6 +328,11 @@ export function WebhookSettings() {
   const showUrl = !!provider && (provider.url_required || provider.has_default_url);
   const urlOptional = !!provider && !provider.url_required;
 
+  /**
+   * Whether the form can be submitted. Creating needs a name, the URL when the provider requires
+   * one, and every required field; editing only needs a name, because the server keeps stored
+   * values for blank fields.
+   */
   const canSubmit = useMemo(() => {
     if (!form || !provider) return false;
     if (!form.name.trim()) return false;
@@ -327,6 +344,7 @@ export function WebhookSettings() {
     return true;
   }, [form, provider, isEdit]);
 
+  /** Build the provider settings from the form, dropping empty values and trimming text fields. */
   const buildConfigObj = (): Record<string, string> | undefined => {
     if (!form || !provider || provider.fields.length === 0) return undefined;
     const out: Record<string, string> = {};
@@ -341,6 +359,7 @@ export function WebhookSettings() {
     return out;
   };
 
+  /** Build the custom headers from the form, skipping rows without a name. */
   const buildHeaders = (): Record<string, string> => {
     if (!form) return {};
     const out: Record<string, string> = {};
@@ -348,6 +367,10 @@ export function WebhookSettings() {
     return out;
   };
 
+  /**
+   * Create or update the target. Updates only send the URL, secret, and headers when they were
+   * re-entered or replaced.
+   */
   const onSubmit = async () => {
     if (!form || !provider || saving || !canSubmit) return;
     setSaving(true);
@@ -388,6 +411,7 @@ export function WebhookSettings() {
     }
   };
 
+  /** Enable or disable a target, then reload. */
   const onToggle = async (target: WebhookTarget) => {
     try {
       await api.webhooks.update(target.id, { enabled: !target.enabled });
@@ -397,6 +421,7 @@ export function WebhookSettings() {
     }
   };
 
+  /** Delete a target, then reload. */
   const onDelete = async (id: string) => {
     try {
       await api.webhooks.remove(id);
@@ -407,6 +432,7 @@ export function WebhookSettings() {
     }
   };
 
+  /** Send a test alert to a target and show the outcome next to it. */
   const onTest = async (id: string) => {
     setTesting(id);
     setTestResult((prev) => {
@@ -428,6 +454,7 @@ export function WebhookSettings() {
     }
   };
 
+  /** Display label for a provider type. */
   const labelOf = (type: WebhookType) => providerOf(type)?.label || type;
 
   return (
