@@ -2,7 +2,7 @@
 
 Source of `ccam`, the Claude Code Agent Monitor command-line interface. It is a [Commander.js](https://github.com/tj/commander.js) command tree that gives the terminal the same surface as the dashboard: server lifecycle, live monitoring, sessions/agents/events/transcripts, analytics, cost, alerts, pricing, data sources, and admin tasks.
 
-The executable shim is [`bin/ccam.js`](../bin/README.md). For the complete user-facing command reference see [`docs/CLI.md`](../docs/CLI.md); this file covers how the code is organized.
+The executable shim is [`bin/ccam.js`](../bin/ccam.js) (see [`bin/README.md`](../bin/README.md)). For the complete user-facing command reference see [`docs/CLI.md`](../docs/CLI.md); this file covers how the code is organized.
 
 ## Quick start
 
@@ -74,7 +74,8 @@ Commands never call `process.exit`. They throw `CliError` (usage/validation), `A
 
 ## Safety model for writes
 
-- Every write goes through `confirm()` — pass `--yes`, or answer y/N on a TTY. Non-interactive shells must pass `--yes`.
+- Writes go through `confirm()` — pass `--yes`, or answer y/N on a TTY. Non-interactive shells must pass `--yes` (otherwise the refusal is `CONFIRMATION_REQUIRED`).
+- Established one-shot mutations keep their historical no-prompt behavior: `pricing set/delete`, `alerts ack/ack-all`, `cleanup`, and `remote-sources add/sync`. Don't add a prompt to these without treating it as a behavior change.
 - `clear-data` requires a literal `--yes`; reaching it through the generic `ccam api` route additionally needs `--confirm CLEAR_ALL_DATA`.
 - `snapshots prune` is a dry run unless given `--apply --confirm PRUNE_SNAPSHOTS`.
 - Pricing edits for GPT/Cursor read the existing row and merge onto it, so a partial edit never zeroes the other rates.
