@@ -74,7 +74,7 @@ Commands never call `process.exit`. They throw `CliError` (usage/validation), `A
 
 ## Safety model for writes
 
-- Writes go through `confirm()` — pass `--yes`, or answer y/N on a TTY. Non-interactive shells must pass `--yes` (otherwise the refusal is `CONFIRMATION_REQUIRED`).
+- Writes go through `confirm()` — pass `--yes`, or answer y/N on a TTY. The prompt only appears when stdin and stdout are both TTYs **and** JSON mode is off; non-interactive shells and any `--json` / `CCAM_OUTPUT=json` run must pass `--yes` (otherwise the refusal is `CONFIRMATION_REQUIRED`).
 - Established one-shot mutations keep their historical no-prompt behavior: `pricing set/delete`, `alerts ack/ack-all`, `cleanup`, and `remote-sources add/sync`. Don't add a prompt to these without treating it as a behavior change.
 - `clear-data` requires a literal `--yes`; reaching it through the generic `ccam api` route additionally needs `--confirm CLEAR_ALL_DATA`.
 - `snapshots prune` is a dry run unless given `--apply --confirm PRUNE_SNAPSHOTS`.
