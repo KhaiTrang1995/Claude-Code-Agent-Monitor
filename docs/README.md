@@ -71,6 +71,13 @@ graph TB
 | [I18N.md](./I18N.md) | Language architecture, locale strategy, and rollout checklist | Frontend and product teams |
 | [CLI.md](./CLI.md) | `ccam` command reference — monitoring, browsing, insights, alerts, pricing, import, administration | Terminal users and CI scripting |
 | [monitoring/README.md](../monitoring/README.md) | Prometheus + Grafana stack (`npm run monitoring:up` or Docker) | DevOps / observability |
+| [cli/README.md](../cli/README.md) | `ccam` CLI internals — module layout, global options, offline mode, error model, adding a command | CLI contributors |
+| [bin/README.md](../bin/README.md) | The `ccam` executable shim and how `npm link` puts it on your PATH | CLI contributors |
+| [scripts/README.md](../scripts/README.md) | Dev, hook, data-management, codegen, and release scripts with their `npm run` entry points | All contributors |
+| [plugins/README.md](../plugins/README.md) | Agent-extension plugin sources, layout, and the sync/validate workflow | Plugin authors |
+| [wiki/README.md](../wiki/README.md) | Localized static wiki files, local preview, and i18n/cache-bump rules | Docs contributors |
+| [.github/workflows/README.md](../.github/workflows/README.md) | CI, file-header, triage, and CLA workflows and how to reproduce CI locally | Maintainers |
+| [.claude/README.md](../.claude/README.md) | Project Claude Code settings, path-scoped rules, review subagents, and skills | Coding-agent users |
 
 ---
 
